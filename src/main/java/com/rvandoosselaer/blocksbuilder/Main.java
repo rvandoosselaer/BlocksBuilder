@@ -5,6 +5,7 @@ import com.jme3.material.TechniqueDef;
 import com.jme3.math.ColorRGBA;
 import com.jme3.renderer.Limits;
 import com.jme3.system.AppSettings;
+import com.rvandoosselaer.blocksbuilder.gui.CameraPivotPointState;
 import com.rvandoosselaer.blocksbuilder.gui.CoordinateAxesState;
 import com.rvandoosselaer.blocksbuilder.gui.MenuState;
 import com.rvandoosselaer.jmeutils.ApplicationGlobals;
@@ -37,8 +38,10 @@ public class Main extends SimpleApplication {
                 new PostProcessingState(),
                 new MenuState(),
                 new BuilderState(),
-                new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true),
                 new CameraState(),
+                new ViewPortState("camera-pivot-point"),
+                new CameraPivotPointState(),
+                new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true),
                 new CoordinateAxesState()
         );
 
