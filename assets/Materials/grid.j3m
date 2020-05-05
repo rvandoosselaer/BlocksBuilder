@@ -1,0 +1,16 @@
+Material birch_leaves : Common/MatDefs/Light/Lighting.j3md {
+
+    MaterialParameters {
+        Shininess: 0
+        UseMaterialColors: true
+        Ambient: 1.0 1.0 1.0 1.0
+        Diffuse: 1.0 1.0 1.0 1.0
+        Specular: 0 0 0 1.0
+        DiffuseMap: MagNearest MinNearestNoMipMaps Textures/grid.png
+    }
+
+    AdditionalRenderState {
+        FaceCull Off
+    }
+
+}

@@ -3,6 +3,7 @@ package com.rvandoosselaer.blocksbuilder.gui;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;
+import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Node;
 import com.rvandoosselaer.jmeutils.gui.GuiUtils;
 import com.simsilica.lemur.Axis;
@@ -11,6 +12,7 @@ import com.simsilica.lemur.Container;
 import com.simsilica.lemur.FillMode;
 import com.simsilica.lemur.Label;
 import com.simsilica.lemur.component.SpringGridLayout;
+import com.simsilica.lemur.component.TbtQuadBackgroundComponent;
 import com.simsilica.lemur.style.ElementId;
 import lombok.Getter;
 import lombok.Setter;
@@ -51,6 +53,11 @@ public class MenuState extends BaseAppState {
         menu.removeFromParent();
     }
 
+    @Override
+    public void update(float tpf) {
+        layout(menu);
+    }
+
     private void onExit() {
         getApplication().stop();
     }
@@ -84,6 +91,9 @@ public class MenuState extends BaseAppState {
 
     private Container createMenu() {
         Container container = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Even, FillMode.Even));
+        ColorRGBA colorRGBA = ((TbtQuadBackgroundComponent) container.getBackground()).getColor();
+        colorRGBA.set(colorRGBA.r, colorRGBA.g, colorRGBA.b, 0.9f);
+
         container.addChild(new Label("BlocksBuilder", new ElementId("title")));
 
         Button newModel = container.addChild(new Button("New"));

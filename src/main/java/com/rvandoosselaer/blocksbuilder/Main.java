@@ -2,12 +2,16 @@ package com.rvandoosselaer.blocksbuilder;
 
 import com.jme3.app.FlyCamAppState;
 import com.jme3.app.SimpleApplication;
+import com.jme3.app.StatsAppState;
+import com.jme3.material.TechniqueDef;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector3f;
+import com.jme3.renderer.Limits;
 import com.jme3.system.AppSettings;
 import com.rvandoosselaer.blocksbuilder.gui.MenuState;
 import com.rvandoosselaer.jmeutils.ApplicationGlobals;
 import com.rvandoosselaer.jmeutils.ApplicationSettingsFactory;
-import com.rvandoosselaer.jmeutils.util.GeometryUtils;
+import com.rvandoosselaer.jmeutils.post.FilterPostProcessorState;
 import com.rvandoosselaer.jmeutils.util.LogUtils;
 import com.simsilica.fx.LightingState;
 import com.simsilica.fx.sky.SkyState;
@@ -29,10 +33,14 @@ public class Main extends SimpleApplication {
     }
 
     public Main() {
-        super(new MenuState(),
+        super(new StatsAppState(),
+                new FilterPostProcessorState(),
+                new LightingState(),
+                new PostProcessingState(),
+                new MenuState(),
+                new BuilderState(),
                 new FlyCamAppState(),
-                new LightingState(0.3f),
-                new SkyState(ColorRGBA.Black, true)
+                new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true)
         );
 
         setSettings(createSettings());
@@ -49,9 +57,17 @@ public class Main extends SimpleApplication {
 
         removeDefaultMappings();
 
-        rootNode.attachChild(GeometryUtils.createCoordinateAxes());
+        int anisotropicFilter = renderer.getLimits().getOrDefault(Limits.TextureAnisotropy, 1);
+        renderer.setDefaultAnisotropicFilter(anisotropicFilter);
+        renderManager.setSinglePassLightBatchSize(3);
+        renderManager.setPreferredLightMode(TechniqueDef.LightMode.SinglePassAndImageBased);
+
+        //
+        cam.setLocation(new Vector3f(0, 20, 32));
+        cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
 
         flyCam.setDragToRotate(true);
+        flyCam.setMoveSpeed(10);
     }
 
     @Override
