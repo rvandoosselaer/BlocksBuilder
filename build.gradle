@@ -1,0 +1,142 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'application'
+}
+
+group = "com.rvandoosselaer"
+version = "1.0.0-SNAPSHOT"
+
+sourceCompatibility = 1.8
+
+ext {
+    blocksVersion = "[1.5,)"
+    jmeUtilsVersion = "[1.0,)"
+    jmeVersion = "[3.3,)"
+    slf4jVersion = "[2.0,)"
+    log4j2Version = "[2.13,)"
+    jacksonVersion = "[2.10,)"
+    lemurVersion = "[1.13,)"
+    lemurProtoVersion = "[1.11,)"
+    lombokVersion = "[1.18,)"
+    groovyVersion = "[3.0,)"
+    simFXVersion = "[1.0,)"
+}
+
+repositories {
+    jcenter()
+    maven {
+        url  'https://dl.bintray.com/remyvd/rvandoosselaer'
+    }
+    mavenLocal()
+}
+
+dependencies {
+    runtime project(':assets')
+
+    // JME
+    implementation "org.jmonkeyengine:jme3-core:${jmeVersion}"
+    implementation "org.jmonkeyengine:jme3-desktop:${jmeVersion}"
+    implementation "org.jmonkeyengine:jme3-lwjgl:${jmeVersion}"
+    implementation "org.jmonkeyengine:jme3-effects:${jmeVersion}"
+
+    // Utils
+    implementation "com.rvandoosselaer:jme-utils:${jmeUtilsVersion}"
+    implementation "com.rvandoosselaer:blocks:${blocksVersion}"
+    implementation "com.simsilica:lemur:${lemurVersion}"
+    implementation "com.simsilica:lemur-proto:${lemurProtoVersion}"
+    implementation "com.simsilica:sim-fx:${simFXVersion}"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    runtime "org.codehaus.groovy:groovy-all:${groovyVersion}"
+
+    // Logging
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    implementation "org.slf4j:jul-to-slf4j:${slf4jVersion}"
+    implementation "org.apache.logging.log4j:log4j-api:${log4j2Version}"
+    implementation "org.apache.logging.log4j:log4j-core:${log4j2Version}"
+    implementation "org.apache.logging.log4j:log4j-slf4j18-impl:${log4j2Version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+}
+
+application {
+    mainClassName = 'com.rvandoosselaer.blocksbuilder.Main'
+    applicationDefaultJvmArgs = [
+            "-Dlog4j.configurationFile=[MY_APP_HOME]/conf/log4j2.yml",
+            "-Dapplication.configurationFile=[MY_APP_HOME]/conf/application.properties"
+    ]
+}
+
+// create a properties file with the version in
+task createProperties(dependsOn: processResources) {
+    doLast {
+        new File("$buildDir/resources/main/version.properties").withWriter { w ->
+            Properties p = new Properties()
+            p['version'] = project.version.toString()
+            p.store w, null
+        }
+    }
+}
+
+// copy the generated javadocs into the /docs folder for the github pages
+task copyJavadoc(dependsOn: javadoc) {
+    doLast {
+        copy {
+            from "$buildDir/docs"
+            into "$projectDir/docs"
+        }
+    }
+}
+
+// remove the generated javadocs in the /docs folder
+task cleanJavadoc(type: Delete) {
+    delete "$projectDir/docs/javadoc/"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task cleanNatives(type: Delete) {
+    delete "$projectDir/liblwjgl.dylib"
+    delete "$projectDir/libopenal.dylib"
+}
+
+task cleanDistFolder(type: Delete) {
+    delete "$projectDir/src/dist"
+}
+
+task copyDistFiles(type: Copy) {
+    from file("$projectDir/src/main/resources/log4j2.yml") into file("$projectDir/src/dist/conf")
+    from file("$projectDir/src/main/resources/application.properties") into file("$projectDir/src/dist/conf")
+}
+
+clean {
+    dependsOn cleanNatives
+    dependsOn cleanJavadoc
+    dependsOn cleanDistFolder
+}
+
+classes {
+    dependsOn createProperties
+}
+
+build {
+    dependsOn copyDistFiles
+    dependsOn copyJavadoc
+}
+
+jar {
+    exclude("**/log4j2.yml")
+    exclude("**/application.properties")
+}
+
+startScripts.doLast {
+    unixScript.text = unixScript.text.replace('[MY_APP_HOME]', '\$APP_HOME')
+    windowsScript.text = windowsScript.text.replace('[MY_APP_HOME]', '%~dp0..')
+}
+
+javadoc {
+    failOnError = false
+}

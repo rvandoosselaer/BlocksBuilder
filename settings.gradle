@@ -1,0 +1,3 @@
+rootProject.name = 'blocksbuilder'
+
+include ':assets'
