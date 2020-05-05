@@ -12,6 +12,8 @@ import com.rvandoosselaer.jmeutils.post.FilterPostProcessorState;
 import com.simsilica.fx.LightingState;
 
 /**
+ * An AppState that handles all post processing effects.
+ *
  * @author: rvandoosselaer
  */
 public class PostProcessingState extends BaseAppState {

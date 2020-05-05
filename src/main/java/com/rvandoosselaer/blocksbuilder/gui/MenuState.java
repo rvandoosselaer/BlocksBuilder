@@ -19,6 +19,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * An AppState that renders the main menu.
+ *
  * @author: rvandoosselaer
  */
 @Slf4j

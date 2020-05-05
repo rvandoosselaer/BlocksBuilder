@@ -24,6 +24,8 @@ import static com.rvandoosselaer.blocksbuilder.InputFunctions.F_Y_ROTATE;
 import static com.rvandoosselaer.blocksbuilder.InputFunctions.F_ZOOM;
 
 /**
+ * An AppState for controlling the camera.
+ *
  * @author: rvandoosselaer
  */
 @Slf4j

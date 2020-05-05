@@ -15,6 +15,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
+ * An AppState for adding and removing blocks. A grid of 32x32 is rendered around the center (0,0,0) point.
+ *
  * @author: rvandoosselaer
  */
 public class BuilderState extends BaseAppState {

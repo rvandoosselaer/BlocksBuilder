@@ -101,6 +101,7 @@ test {
 task cleanNatives(type: Delete) {
     delete "$projectDir/liblwjgl.dylib"
     delete "$projectDir/libopenal.dylib"
+    delete "$projectDir/libbulletjme.dylib"
 }
 
 task cleanDistFolder(type: Delete) {
