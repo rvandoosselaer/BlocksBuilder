@@ -28,7 +28,7 @@ public class CameraPivotPointState extends BaseAppState {
     protected void initialize(Application app) {
         pivotPoint = createPivotPoint();
         cameraState = getState(CameraState.class);
-        ViewPortState viewPortState = getState(ViewPortState.class);
+        ViewPortState viewPortState = getStateManager().getState("camera-pivot-point", ViewPortState.class);
         node = viewPortState.getNode();
         pivotPointCamera = viewPortState.getCamera();
     }
@@ -50,7 +50,6 @@ public class CameraPivotPointState extends BaseAppState {
     @Override
     public void update(float tpf) {
         pivotPoint.setLocalTranslation(cameraState.getTargetLocation());
-
     }
 
     @Override

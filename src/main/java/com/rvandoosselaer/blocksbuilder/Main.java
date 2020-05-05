@@ -40,9 +40,10 @@ public class Main extends SimpleApplication {
                 new BuilderState(),
                 new CameraState(),
                 new ViewPortState("camera-pivot-point"),
+                new ViewPortState("coordinate-axes"),
                 new CameraPivotPointState(),
-                new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true),
-                new CoordinateAxesState()
+                new CoordinateAxesState(),
+                new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true)
         );
 
         setSettings(createSettings());
