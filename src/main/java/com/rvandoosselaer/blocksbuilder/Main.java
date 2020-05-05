@@ -1,11 +1,11 @@
 package com.rvandoosselaer.blocksbuilder;
 
 import com.jme3.app.SimpleApplication;
-import com.jme3.app.StatsAppState;
 import com.jme3.material.TechniqueDef;
 import com.jme3.math.ColorRGBA;
 import com.jme3.renderer.Limits;
 import com.jme3.system.AppSettings;
+import com.rvandoosselaer.blocksbuilder.gui.CoordinateAxesState;
 import com.rvandoosselaer.blocksbuilder.gui.MenuState;
 import com.rvandoosselaer.jmeutils.ApplicationGlobals;
 import com.rvandoosselaer.jmeutils.ApplicationSettingsFactory;
@@ -32,15 +32,14 @@ public class Main extends SimpleApplication {
     }
 
     public Main() {
-        super(new StatsAppState(),
-                new FilterPostProcessorState(),
+        super(new FilterPostProcessorState(),
                 new LightingState(),
                 new PostProcessingState(),
                 new MenuState(),
                 new BuilderState(),
                 new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true),
-                new CameraState()
-
+                new CameraState(),
+                new CoordinateAxesState()
         );
 
         setSettings(createSettings());
