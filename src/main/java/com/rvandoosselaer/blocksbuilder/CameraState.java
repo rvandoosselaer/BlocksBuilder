@@ -12,6 +12,7 @@ import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
 import com.simsilica.lemur.input.StateFunctionListener;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.rvandoosselaer.blocksbuilder.InputFunctions.CAMERA_INPUT_GROUP;
@@ -83,11 +84,12 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
     /**
      * camera focus point
      */
+    @Getter
     private Vector3f targetLocation = new Vector3f();
     /**
      * camera focus point offset
      */
-    private Vector3f targetLocationOffset = new Vector3f(0, 1.5f, 0);
+    private Vector3f targetLocationOffset = new Vector3f(0, 0, 0);
     /**
      * invert mouse x-axis movement (camera yaw)
      */
