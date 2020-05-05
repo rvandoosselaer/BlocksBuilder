@@ -1,11 +1,9 @@
 package com.rvandoosselaer.blocksbuilder;
 
-import com.jme3.app.FlyCamAppState;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.StatsAppState;
 import com.jme3.material.TechniqueDef;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.Vector3f;
 import com.jme3.renderer.Limits;
 import com.jme3.system.AppSettings;
 import com.rvandoosselaer.blocksbuilder.gui.MenuState;
@@ -16,6 +14,7 @@ import com.rvandoosselaer.jmeutils.util.LogUtils;
 import com.simsilica.fx.LightingState;
 import com.simsilica.fx.sky.SkyState;
 import com.simsilica.lemur.GuiGlobals;
+import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.style.BaseStyles;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,8 +38,9 @@ public class Main extends SimpleApplication {
                 new PostProcessingState(),
                 new MenuState(),
                 new BuilderState(),
-                new FlyCamAppState(),
-                new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true)
+                new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true),
+                new CameraState()
+
         );
 
         setSettings(createSettings());
@@ -62,12 +62,8 @@ public class Main extends SimpleApplication {
         renderManager.setSinglePassLightBatchSize(3);
         renderManager.setPreferredLightMode(TechniqueDef.LightMode.SinglePassAndImageBased);
 
-        //
-        cam.setLocation(new Vector3f(0, 20, 32));
-        cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
-
-        flyCam.setDragToRotate(true);
-        flyCam.setMoveSpeed(10);
+        InputMapper inputMapper = GuiGlobals.getInstance().getInputMapper();
+        InputFunctions.initializeDefaultMappings(inputMapper);
     }
 
     @Override
