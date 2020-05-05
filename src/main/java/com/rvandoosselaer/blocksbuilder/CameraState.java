@@ -33,11 +33,11 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
      * Actual distance between the camera and the target; the distance will change when smooth motion is enabled
      * and the camera is moving around, but will always return to the targetDistance. This is an internal parameter!
      */
-    private float distance = 38f;
+    private float distance = 40f;
     /**
      * distance between the camera and the target
      */
-    private float targetDistance = 38f;
+    private float targetDistance = distance;
     /**
      * max zoom-in distance
      */
@@ -61,7 +61,7 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
     /**
      * rotation on the Y axis
      */
-    private float yaw = 0;
+    private float yaw = FastMath.HALF_PI;
     /**
      * rotation on the X axis
      */
