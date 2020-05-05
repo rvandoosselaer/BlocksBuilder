@@ -10,6 +10,7 @@ import com.rvandoosselaer.blocksbuilder.gui.CoordinateAxesState;
 import com.rvandoosselaer.blocksbuilder.gui.MenuState;
 import com.rvandoosselaer.jmeutils.ApplicationGlobals;
 import com.rvandoosselaer.jmeutils.ApplicationSettingsFactory;
+import com.rvandoosselaer.jmeutils.ViewPortState;
 import com.rvandoosselaer.jmeutils.post.FilterPostProcessorState;
 import com.rvandoosselaer.jmeutils.util.LogUtils;
 import com.simsilica.fx.LightingState;

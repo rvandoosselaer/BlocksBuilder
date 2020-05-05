@@ -7,7 +7,7 @@ import com.jme3.math.Vector3f;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Node;
-import com.rvandoosselaer.blocksbuilder.ViewPortState;
+import com.rvandoosselaer.jmeutils.ViewPortState;
 import com.rvandoosselaer.jmeutils.util.GeometryUtils;
 
 /**
@@ -30,11 +30,7 @@ public class CoordinateAxesState extends BaseAppState {
         ViewPortState viewPortState = getStateManager().getState("coordinate-axes", ViewPortState.class);
         node = viewPortState.getNode();
         coordinateAxesCamera = viewPortState.getCamera();
-        float right = cameraSize.x / app.getCamera().getWidth();
-        float top = cameraSize.y / app.getCamera().getHeight();
-        coordinateAxesCamera.setViewPort(0, right, 0, top);
-        float aspect = cameraSize.x / cameraSize.y;
-        coordinateAxesCamera.setFrustumPerspective(45, aspect, 1f, 5f);
+        positionCamera(coordinateAxesCamera, cameraSize);
     }
 
     @Override
@@ -56,6 +52,15 @@ public class CoordinateAxesState extends BaseAppState {
         Vector3f dir = new Vector3f(getApplication().getCamera().getDirection());
         coordinateAxesCamera.setLocation(dir.negateLocal().mult(3));
         coordinateAxesCamera.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
+    }
+
+    private void positionCamera(Camera coordinateAxesCamera, Vector2f cameraSize) {
+        float right = cameraSize.x / getApplication().getCamera().getWidth();
+        float top = cameraSize.y / getApplication().getCamera().getHeight();
+        coordinateAxesCamera.setViewPort(0, right, 0, top);
+
+        float aspect = cameraSize.x / cameraSize.y;
+        coordinateAxesCamera.setFrustumPerspective(45, aspect, 1f, 5f);
     }
 
 }
