@@ -1,4 +1,4 @@
-Material birch_leaves : Common/MatDefs/Light/Lighting.j3md {
+Material grid : Common/MatDefs/Light/Lighting.j3md {
 
     MaterialParameters {
         Shininess: 0
