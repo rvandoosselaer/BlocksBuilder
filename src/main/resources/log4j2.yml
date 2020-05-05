@@ -4,23 +4,30 @@ Configuration:
       name: STDOUT
       PatternLayout:
         Pattern: "%d %-5p [%t] %C (%F:%L) - %m%n"
-#    RollingFile:
-#      name: RollingFile
-#      fileName: logs/app.log
-#      filePattern: "logs/$${date:yyyy-MM}/app-%d{dd-MM-yyyy}-%i.log.gz"
-#      PatternLayout:
-#        Pattern: "%d %-5p [%t] %C:%L - %m%n"
-#      Policies:
-#        TimeBasedTriggeringPolicy:
-#          interval: 1
-#          modulate: true
+    RollingFile:
+      name: RollingFile
+      fileName: logs/app.log
+      filePattern: "logs/$${date:yyyy-MM}/app-%d{dd-MM-yyyy}-%i.log.gz"
+      PatternLayout:
+        Pattern: "%d %-5p [%t] %C:%L - %m%n"
+      Policies:
+        TimeBasedTriggeringPolicy:
+          interval: 1
+          modulate: true
 
   Loggers:
     logger:
       - name: com.rvandoosselaer
         level: all
+      # log information about the system: graphics card, opengl and glsl version, audio card, ...
+      - name: com.jme3.system
+        level: info
+      - name: com.jme3.renderer
+        level: info
+      - name: com.jme3.audio
+        level: info
     Root:
-      level: warning
+      level: warn
       AppenderRef:
         - ref: STDOUT
-#        - ref: RollingFile
+        - ref: RollingFile
