@@ -17,6 +17,7 @@ import com.simsilica.lemur.Label;
 import com.simsilica.lemur.Panel;
 import com.simsilica.lemur.TextField;
 import com.simsilica.lemur.component.BorderLayout;
+import com.simsilica.lemur.component.IconComponent;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.core.GuiControl;
 import com.simsilica.lemur.core.VersionedReference;
@@ -147,7 +148,10 @@ public class BlocksState extends BaseAppState {
         int col = 0;
         int row = 0;
         for (Block block : blocks) {
-            Button button = new Button(block.getName());
+            Button button = new Button("");
+            button.setPreferredSize(button.getPreferredSize().setX(64).setY(64));
+            //button.setIcon(new QuadBackgroundComponent(GuiGlobals.getInstance().loadTexture("/Textures/blocks/" + block.getName().replaceAll("\\s", "_") + ".png", false, false)));
+            button.setIcon(new IconComponent("/Textures/blocks/" + block.getName().replaceAll("\\s", "_") + ".png"));
             button.addClickCommands(btn -> selectedBlock.setText(block.getName()));
             grid[row][col++] = button;
 
