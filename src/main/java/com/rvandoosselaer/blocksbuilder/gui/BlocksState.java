@@ -3,6 +3,7 @@ package com.rvandoosselaer.blocksbuilder.gui;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;
+import com.jme3.math.Vector2f;
 import com.jme3.scene.Node;
 import com.rvandoosselaer.blocks.Block;
 import com.rvandoosselaer.blocks.BlockRegistry;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -117,6 +119,7 @@ public class BlocksState extends BaseAppState {
 
         Container filterWrapper = container.addChild(new Container(new BorderLayout(), new ElementId("wrapper")));
         TextField filter = filterWrapper.addChild(new TextField("Filter..."), BorderLayout.Position.Center);
+        filter.setTextVAlignment(VAlignment.Center);
         filter.getControl(GuiControl.class).addFocusChangeListener(new FilterTextFieldFocusListener(filterPlaceholderText));
         filterRef = filter.getDocumentModel().createReference();
         Button clearFilter = filterWrapper.addChild(new Button("Clear"), BorderLayout.Position.East);
@@ -139,7 +142,9 @@ public class BlocksState extends BaseAppState {
 
     private Collection<Block> getBlocks() {
         BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
-        return blockRegistry.getAll();
+        return blockRegistry.getAll().stream()
+                .sorted(Comparator.comparing(Block::getName))
+                .collect(Collectors.toList());
     }
 
     private Panel[][] createBlocksGridArray(Collection<Block> blocks, int cols) {
@@ -150,10 +155,10 @@ public class BlocksState extends BaseAppState {
         int row = 0;
         for (Block block : blocks) {
             Button button = new Button("");
-            button.setPreferredSize(button.getPreferredSize().setX(64).setY(64));
             IconComponent icon = new IconComponent("/Textures/blocks/" + block.getName().replaceAll("\\s", "_") + ".png");
             icon.setHAlignment(HAlignment.Center);
             icon.setVAlignment(VAlignment.Center);
+            icon.setIconSize(new Vector2f(50, 50));
             button.setIcon(icon);
             button.addClickCommands(btn -> selectedBlock.setText(block.getName()));
             grid[row][col++] = button;
