@@ -9,6 +9,7 @@ import com.rvandoosselaer.blocks.BlockRegistry;
 import com.rvandoosselaer.blocks.BlocksConfig;
 import com.rvandoosselaer.jmeutils.gui.GuiUtils;
 import com.simsilica.lemur.Axis;
+import com.simsilica.lemur.Button;
 import com.simsilica.lemur.Container;
 import com.simsilica.lemur.FillMode;
 import com.simsilica.lemur.Label;
@@ -58,6 +59,11 @@ public class BlocksState extends BaseAppState {
         blocks.removeFromParent();
     }
 
+    @Override
+    public void update(float tpf) {
+        layout(blocks);
+    }
+
     private Container layout(Container container) {
         int margin = 10;
         container.setLocalTranslation(GuiUtils.getWidth() - container.getPreferredSize().getX() - margin, GuiUtils.getHeight() - 10, 99);
@@ -83,7 +89,10 @@ public class BlocksState extends BaseAppState {
         int col = 0;
         int row = 0;
         for (Block block : blocks) {
-            grid[row][col++] = new Label(block.getName());
+            Button button = new Button(block.getName());
+            button.addClickCommands(btn -> System.out.println(block.getName()));
+            grid[row][col++] = button;
+
             if (col >= cols) {
                 col = 0;
                 row++;
