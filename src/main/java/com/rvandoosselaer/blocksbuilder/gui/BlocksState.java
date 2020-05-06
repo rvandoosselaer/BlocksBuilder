@@ -14,10 +14,15 @@ import com.simsilica.lemur.Container;
 import com.simsilica.lemur.FillMode;
 import com.simsilica.lemur.Label;
 import com.simsilica.lemur.Panel;
+import com.simsilica.lemur.TextField;
 import com.simsilica.lemur.component.SpringGridLayout;
+import com.simsilica.lemur.core.GuiControl;
+import com.simsilica.lemur.focus.FocusChangeEvent;
+import com.simsilica.lemur.focus.FocusChangeListener;
 import com.simsilica.lemur.grid.ArrayGridModel;
 import com.simsilica.lemur.style.ElementId;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,6 +80,9 @@ public class BlocksState extends BaseAppState {
         Container container = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Even, FillMode.Even));
         container.addChild(new Label("Blocks", new ElementId("title")));
 
+        TextField filter = container.addChild(new TextField("Filter..."));
+        filter.getControl(GuiControl.class).addFocusChangeListener(new FilterTextFieldFocusListener("Filter..."));
+
         container.addChild(new ExtendedGridPanel(new ArrayGridModel<>(createBlocksGridArray(4))));
 
         return container;
@@ -100,6 +108,33 @@ public class BlocksState extends BaseAppState {
         }
 
         return grid;
+    }
+
+    @RequiredArgsConstructor
+    private static class FilterTextFieldFocusListener implements FocusChangeListener {
+
+        private final String placeholderText;
+
+        @Override
+        public void focusGained(FocusChangeEvent event) {
+            GuiControl guiControl = (GuiControl) event.getSource();
+            TextField textField = (TextField) guiControl.getNode();
+            // only clear the text when it's the placeholder text.
+            if (textField.getText().equals(placeholderText)) {
+                textField.setText("");
+            }
+        }
+
+        @Override
+        public void focusLost(FocusChangeEvent event) {
+            GuiControl guiControl = (GuiControl) event.getSource();
+            TextField textField = (TextField) guiControl.getNode();
+            // set the placeholder text back when the textfield is empty
+            if (textField.getText().isEmpty()) {
+                textField.setText(placeholderText);
+            }
+        }
+
     }
 
 }
