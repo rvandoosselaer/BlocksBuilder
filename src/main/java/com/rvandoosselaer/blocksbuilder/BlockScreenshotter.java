@@ -12,6 +12,7 @@ import com.jme3.post.FilterPostProcessor;
 import com.jme3.post.filters.FXAAFilter;
 import com.jme3.scene.Node;
 import com.jme3.system.AppSettings;
+import com.jme3.texture.image.ImageRaster;
 import com.rvandoosselaer.blocks.Block;
 import com.rvandoosselaer.blocks.BlocksConfig;
 import com.rvandoosselaer.blocks.Chunk;
@@ -19,6 +20,7 @@ import com.simsilica.mathd.Vec3i;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Tool to generate an icon of all the default blocks.
@@ -62,6 +64,7 @@ public class BlockScreenshotter extends SimpleApplication {
         chunk = Chunk.createAt(new Vec3i());
 
         screenshotState = stateManager.getState(ScreenshotState.class);
+        screenshotState.setProcessFunction(new TransparentPixelProcessor());
 
         FilterPostProcessor fpp = new FilterPostProcessor(assetManager);
         fpp.addFilter(new FXAAFilter());
@@ -98,6 +101,25 @@ public class BlockScreenshotter extends SimpleApplication {
         AppSettings settings = new AppSettings(true);
         settings.setResolution(64, 64);
         return settings;
+    }
+
+    /**
+     * A processor function that changes the black pixels with transparent pixels.
+     */
+    private static class TransparentPixelProcessor implements Consumer<ImageRaster> {
+
+        @Override
+        public void accept(ImageRaster imageRaster) {
+            for (int w = 0; w < imageRaster.getWidth(); w++) {
+                for (int h = 0; h < imageRaster.getHeight(); h++) {
+                    ColorRGBA pixel = imageRaster.getPixel(w, h);
+                    if (pixel.equals(ColorRGBA.Black)) {
+                        imageRaster.setPixel(w, h, ColorRGBA.BlackNoAlpha);
+                    }
+                }
+            }
+        }
+
     }
 
 }

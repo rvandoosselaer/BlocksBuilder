@@ -2,7 +2,6 @@ package com.rvandoosselaer.blocksbuilder;
 
 import com.jme3.app.Application;
 import com.jme3.app.state.BaseAppState;
-import com.jme3.math.ColorRGBA;
 import com.jme3.post.SceneProcessor;
 import com.jme3.profile.AppProfiler;
 import com.jme3.renderer.RenderManager;
@@ -17,14 +16,17 @@ import com.jme3.util.BufferUtils;
 import com.nx.util.jme3.base.ImageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 
 /**
  * @author: rvandoosselaer
  */
+@Slf4j
 @RequiredArgsConstructor
 class ScreenshotState extends BaseAppState implements SceneProcessor {
 
@@ -36,6 +38,8 @@ class ScreenshotState extends BaseAppState implements SceneProcessor {
     private int height;
     private Renderer renderer;
     private boolean capture;
+    @Setter
+    private Consumer<ImageRaster> processFunction;
 
     @Override
     protected void initialize(Application app) {
@@ -48,6 +52,8 @@ class ScreenshotState extends BaseAppState implements SceneProcessor {
 
     @Override
     protected void cleanup(Application app) {
+        outBuf.clear();
+        BufferUtils.destroyDirectBuffer(outBuf);
     }
 
     @Override
@@ -64,6 +70,9 @@ class ScreenshotState extends BaseAppState implements SceneProcessor {
 
     @Override
     public void reshape(ViewPort vp, int w, int h) {
+        width = w;
+        height = h;
+        outBuf = BufferUtils.createByteBuffer(width * height * (int) Math.ceil(Image.Format.RGBA8.getBitsPerPixel() / 8.0));
     }
 
     @Override
@@ -76,7 +85,6 @@ class ScreenshotState extends BaseAppState implements SceneProcessor {
 
     }
 
-    @SneakyThrows
     @Override
     public void postFrame(FrameBuffer out) {
         if (!capture) {
@@ -87,18 +95,18 @@ class ScreenshotState extends BaseAppState implements SceneProcessor {
 
         Image image = new Image(Image.Format.RGBA8, width, height, outBuf, ColorSpace.Linear);
         ImageRaster imageRaster = ImageRaster.create(image);
-        for (int w = 0; w < imageRaster.getWidth(); w++) {
-            for (int h = 0; h < imageRaster.getHeight(); h++) {
-                ColorRGBA pixel = imageRaster.getPixel(w, h);
-                if (pixel.equals(ColorRGBA.Black)) {
-                    imageRaster.setPixel(w, h, ColorRGBA.BlackNoAlpha);
-                }
-            }
+
+        // send the image to the process function and rewind the buffer
+        if (processFunction != null) {
+            processFunction.accept(imageRaster);
+            outBuf.rewind();
         }
 
-        outBuf.rewind();
-
-        ImageUtil.writeImage(image, Paths.get(path, filename + ".png").toFile());
+        try {
+            ImageUtil.writeImage(image, Paths.get(path, filename + ".png").toFile());
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
         capture = false;
     }
 
