@@ -59,10 +59,7 @@ public class CameraPivotPointState extends BaseAppState {
     }
 
     private Geometry createPivotPoint() {
-        Geometry geometry = GeometryUtils.createGeometry(new Sphere(8, 8, 0.15f), ColorRGBA.Orange, false);
-        geometry.getMaterial().getAdditionalRenderState().setWireframe(true);
-
-        return geometry;
+        return GeometryUtils.createGeometry(new Sphere(16, 16, 0.25f), new ColorRGBA(251f / 255f, 130f / 255f, 0f, 0.8f), false);
     }
 
 }
