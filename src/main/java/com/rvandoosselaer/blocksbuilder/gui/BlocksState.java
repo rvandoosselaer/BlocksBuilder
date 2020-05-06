@@ -15,18 +15,24 @@ import com.simsilica.lemur.FillMode;
 import com.simsilica.lemur.Label;
 import com.simsilica.lemur.Panel;
 import com.simsilica.lemur.TextField;
+import com.simsilica.lemur.component.BorderLayout;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.core.GuiControl;
+import com.simsilica.lemur.core.VersionedReference;
 import com.simsilica.lemur.focus.FocusChangeEvent;
 import com.simsilica.lemur.focus.FocusChangeListener;
 import com.simsilica.lemur.grid.ArrayGridModel;
 import com.simsilica.lemur.style.ElementId;
+import com.simsilica.lemur.text.DocumentModel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * An AppState that renders the blocks window.
@@ -39,11 +45,14 @@ public class BlocksState extends BaseAppState {
     @Getter
     @Setter
     private Node node;
-    private Container blocks;
+    private Container blocksContainer;
+    private ExtendedGridPanel blocksGrid;
+    private String filterPlaceholderText = "Filter...";
+    private VersionedReference<DocumentModel> filterRef;
 
     @Override
     protected void initialize(Application app) {
-        blocks = layout(createBlocksContainer());
+        blocksContainer = layout(createBlocksContainer());
 
         if (node == null) {
             node = ((SimpleApplication) app).getGuiNode();
@@ -56,17 +65,21 @@ public class BlocksState extends BaseAppState {
 
     @Override
     protected void onEnable() {
-        node.attachChild(blocks);
+        node.attachChild(blocksContainer);
     }
 
     @Override
     protected void onDisable() {
-        blocks.removeFromParent();
+        blocksContainer.removeFromParent();
     }
 
     @Override
     public void update(float tpf) {
-        layout(blocks);
+        layout(blocksContainer);
+
+        if (filterRef.update()) {
+            filterBlocks(filterRef.get().getText());
+        }
     }
 
     private Container layout(Container container) {
@@ -76,21 +89,51 @@ public class BlocksState extends BaseAppState {
         return container;
     }
 
+    private void filterBlocks(String text) {
+        if (text == null || text.isEmpty() || text.equals(filterPlaceholderText)) {
+            return;
+        }
+
+        String[] split = text.split("\\s+");
+
+        // filter out the blocks that don't match per word.
+        List<Block> filteredBlocks = new ArrayList<>(getBlocks());
+        for (String s : split) {
+            filteredBlocks.removeAll(getBlocks().stream()
+                    .filter(block -> !block.getName().contains(s))
+                    .collect(Collectors.toList()));
+        }
+
+        blocksGrid.setModel(new ArrayGridModel<>(createBlocksGridArray(filteredBlocks, 4)));
+    }
+
     private Container createBlocksContainer() {
         Container container = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Even, FillMode.Even));
         container.addChild(new Label("Blocks", new ElementId("title")));
 
-        TextField filter = container.addChild(new TextField("Filter..."));
-        filter.getControl(GuiControl.class).addFocusChangeListener(new FilterTextFieldFocusListener("Filter..."));
+        Container wrapper = container.addChild(new Container(new BorderLayout(), new ElementId("wrapper")));
+        TextField filter = wrapper.addChild(new TextField("Filter..."), BorderLayout.Position.Center);
+        filter.getControl(GuiControl.class).addFocusChangeListener(new FilterTextFieldFocusListener(filterPlaceholderText));
+        filterRef = filter.getDocumentModel().createReference();
+        Button clearFilter = wrapper.addChild(new Button("Clear"), BorderLayout.Position.East);
+        clearFilter.addClickCommands(source -> clearFilter(filter));
 
-        container.addChild(new ExtendedGridPanel(new ArrayGridModel<>(createBlocksGridArray(4))));
+        blocksGrid = container.addChild(new ExtendedGridPanel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), 4))));
 
         return container;
     }
 
-    private Panel[][] createBlocksGridArray(int cols) {
+    private void clearFilter(TextField filter) {
+        filter.setText(filterPlaceholderText);
+        blocksGrid.setModel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), 4)));
+    }
+
+    private Collection<Block> getBlocks() {
         BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
-        Collection<Block> blocks = blockRegistry.getAll();
+        return blockRegistry.getAll();
+    }
+
+    private Panel[][] createBlocksGridArray(Collection<Block> blocks, int cols) {
         int rows = (int) Math.ceil((double) blocks.size() / cols);
         Panel[][] grid = new Panel[rows][cols];
 
