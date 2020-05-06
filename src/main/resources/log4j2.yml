@@ -19,6 +19,8 @@ Configuration:
     logger:
       - name: com.rvandoosselaer
         level: all
+      - name: com.rvandoosselaer.blocks
+        level: debug
       # log information about the system: graphics card, opengl and glsl version, audio card, ...
       - name: com.jme3.system
         level: info

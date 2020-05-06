@@ -12,6 +12,7 @@ import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
 import com.simsilica.lemur.Container;
 import com.simsilica.lemur.FillMode;
+import com.simsilica.lemur.HAlignment;
 import com.simsilica.lemur.Label;
 import com.simsilica.lemur.Panel;
 import com.simsilica.lemur.TextField;
@@ -49,6 +50,7 @@ public class BlocksState extends BaseAppState {
     private ExtendedGridPanel blocksGrid;
     private String filterPlaceholderText = "Filter...";
     private VersionedReference<DocumentModel> filterRef;
+    private Label selectedBlock;
 
     @Override
     protected void initialize(Application app) {
@@ -111,14 +113,19 @@ public class BlocksState extends BaseAppState {
         Container container = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Even, FillMode.Even));
         container.addChild(new Label("Blocks", new ElementId("title")));
 
-        Container wrapper = container.addChild(new Container(new BorderLayout(), new ElementId("wrapper")));
-        TextField filter = wrapper.addChild(new TextField("Filter..."), BorderLayout.Position.Center);
+        Container filterWrapper = container.addChild(new Container(new BorderLayout(), new ElementId("wrapper")));
+        TextField filter = filterWrapper.addChild(new TextField("Filter..."), BorderLayout.Position.Center);
         filter.getControl(GuiControl.class).addFocusChangeListener(new FilterTextFieldFocusListener(filterPlaceholderText));
         filterRef = filter.getDocumentModel().createReference();
-        Button clearFilter = wrapper.addChild(new Button("Clear"), BorderLayout.Position.East);
+        Button clearFilter = filterWrapper.addChild(new Button("Clear"), BorderLayout.Position.East);
         clearFilter.addClickCommands(source -> clearFilter(filter));
 
         blocksGrid = container.addChild(new ExtendedGridPanel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), 4))));
+
+        Container selectedBlockWrapper = container.addChild(new Container(new BorderLayout(), new ElementId("wrapper")));
+        selectedBlockWrapper.addChild(new Label("Block: "), BorderLayout.Position.West);
+        selectedBlock = selectedBlockWrapper.addChild(new Label("", new ElementId(Label.ELEMENT_ID).child("value.label")), BorderLayout.Position.Center);
+        selectedBlock.setTextHAlignment(HAlignment.Left);
 
         return container;
     }
@@ -141,7 +148,7 @@ public class BlocksState extends BaseAppState {
         int row = 0;
         for (Block block : blocks) {
             Button button = new Button(block.getName());
-            button.addClickCommands(btn -> System.out.println(block.getName()));
+            button.addClickCommands(btn -> selectedBlock.setText(block.getName()));
             grid[row][col++] = button;
 
             if (col >= cols) {
