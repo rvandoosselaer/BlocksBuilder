@@ -5,6 +5,8 @@ import com.jme3.material.TechniqueDef;
 import com.jme3.math.ColorRGBA;
 import com.jme3.renderer.Limits;
 import com.jme3.system.AppSettings;
+import com.rvandoosselaer.blocks.BlocksConfig;
+import com.rvandoosselaer.blocksbuilder.gui.BlocksState;
 import com.rvandoosselaer.blocksbuilder.gui.CameraPivotPointState;
 import com.rvandoosselaer.blocksbuilder.gui.CoordinateAxesState;
 import com.rvandoosselaer.blocksbuilder.gui.MenuState;
@@ -38,6 +40,7 @@ public class Main extends SimpleApplication {
                 new LightingState(),
                 new PostProcessingState(),
                 new MenuState(),
+                new BlocksState(),
                 new BuilderState(),
                 new CameraState(),
                 new ViewPortState("camera-pivot-point"),
@@ -55,6 +58,7 @@ public class Main extends SimpleApplication {
     public void simpleInitApp() {
         GuiGlobals.initialize(this);
         ApplicationGlobals.initialize(this);
+        BlocksConfig.initialize(assetManager);
 
         BaseStyles.loadGlassStyle();
         GuiGlobals.getInstance().getStyles().setDefaultStyle(BaseStyles.GLASS);
