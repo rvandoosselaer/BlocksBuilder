@@ -29,6 +29,7 @@ repositories {
         url  'https://dl.bintray.com/remyvd/rvandoosselaer'
     }
     mavenLocal()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -49,6 +50,7 @@ dependencies {
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     runtime "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    implementation 'com.github.NemesisMate.util-jme3:util-jme3-base:master-SNAPSHOT'
 
     // Logging
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
