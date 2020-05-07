@@ -1,0 +1,12 @@
+Material remove-block : Common/MatDefs/Misc/Unshaded.j3md {
+
+    MaterialParameters {
+        Color: 1.0 0.0 0.0 0.3
+        ColorMap: Textures/remove-block.png
+    }
+
+    AdditionalRenderState {
+        Blend Alpha
+    }
+
+}
