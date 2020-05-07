@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'application'
+}
+
+sourceCompatibility = 1.8
+
+ext {
+    blocksVersion = "[1.5,)"
+    jmeUtilsVersion = "[1.0,)"
+    jmeVersion = "[3.3,)"
+    slf4jVersion = "[2.0,)"
+    log4j2Version = "[2.13,)"
+    jacksonVersion = "[2.10,)"
+}
+
+repositories {
+    jcenter()
+    maven {
+        url  'https://dl.bintray.com/remyvd/rvandoosselaer'
+    }
+    mavenLocal()
+}
+
+dependencies {
+    runtime project(':assets')
+
+    // JME
+    implementation "org.jmonkeyengine:jme3-core:${jmeVersion}"
+    implementation "org.jmonkeyengine:jme3-desktop:${jmeVersion}"
+    implementation "org.jmonkeyengine:jme3-lwjgl:${jmeVersion}"
+    implementation "org.jmonkeyengine:jme3-effects:${jmeVersion}"
+
+    // Utils
+    implementation "com.rvandoosselaer:jme-utils:${jmeUtilsVersion}"
+    implementation "com.rvandoosselaer:blocks:${blocksVersion}"
+
+    // Logging
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    implementation "org.slf4j:jul-to-slf4j:${slf4jVersion}"
+    implementation "org.apache.logging.log4j:log4j-api:${log4j2Version}"
+    implementation "org.apache.logging.log4j:log4j-core:${log4j2Version}"
+    implementation "org.apache.logging.log4j:log4j-slf4j18-impl:${log4j2Version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+}

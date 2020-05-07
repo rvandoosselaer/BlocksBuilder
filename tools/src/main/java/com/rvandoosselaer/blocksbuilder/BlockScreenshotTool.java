@@ -12,22 +12,25 @@ import com.jme3.post.FilterPostProcessor;
 import com.jme3.post.filters.FXAAFilter;
 import com.jme3.scene.Node;
 import com.jme3.system.AppSettings;
-import com.jme3.texture.image.ImageRaster;
+import com.jme3.texture.Image;
 import com.rvandoosselaer.blocks.Block;
 import com.rvandoosselaer.blocks.BlocksConfig;
 import com.rvandoosselaer.blocks.Chunk;
+import com.rvandoosselaer.jmeutils.ScreenshotState;
+import com.rvandoosselaer.jmeutils.util.ImageUtils;
 import com.simsilica.mathd.Vec3i;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
- * Tool to generate an icon of all the default blocks.
+ * Tool to generate an icon for all the default blocks.
  *
  * @author: rvandoosselaer
  */
-public class BlockScreenshotter extends SimpleApplication {
+public class BlockScreenshotTool extends SimpleApplication {
 
     private Node wrapper;
     private int index = 0;
@@ -35,15 +38,15 @@ public class BlockScreenshotter extends SimpleApplication {
     private ScreenshotState screenshotState;
 
     public static void main(String[] args) {
-        BlockScreenshotter app = new BlockScreenshotter();
+        BlockScreenshotTool app = new BlockScreenshotTool();
         app.setSettings(createAppSettings());
         app.setShowSettings(false);
         app.start();
     }
 
-    public BlockScreenshotter() {
+    public BlockScreenshotTool() {
         super(new DebugKeysAppState(),
-                new ScreenshotState(System.getProperty("user.dir") + "/assets/Textures/blocks/"),
+                new ScreenshotState(Paths.get(System.getProperty("user.dir"), "/assets/Textures/blocks/")),
                 new FlyCamAppState());
     }
 
@@ -106,20 +109,13 @@ public class BlockScreenshotter extends SimpleApplication {
     /**
      * A processor function that changes the black pixels with transparent pixels.
      */
-    private static class TransparentPixelProcessor implements Consumer<ImageRaster> {
+    private static class TransparentPixelProcessor implements Function<Image, Image> {
 
         @Override
-        public void accept(ImageRaster imageRaster) {
-            for (int w = 0; w < imageRaster.getWidth(); w++) {
-                for (int h = 0; h < imageRaster.getHeight(); h++) {
-                    ColorRGBA pixel = imageRaster.getPixel(w, h);
-                    if (pixel.equals(ColorRGBA.Black)) {
-                        imageRaster.setPixel(w, h, ColorRGBA.BlackNoAlpha);
-                    }
-                }
-            }
+        public Image apply(Image image) {
+            ImageUtils.replaceColors(image, ColorRGBA.Black, ColorRGBA.BlackNoAlpha);
+            return image;
         }
-
     }
 
 }
