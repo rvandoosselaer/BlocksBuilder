@@ -8,6 +8,7 @@ import com.jme3.scene.Node;
 import com.rvandoosselaer.blocks.Block;
 import com.rvandoosselaer.blocks.BlockRegistry;
 import com.rvandoosselaer.blocks.BlocksConfig;
+import com.rvandoosselaer.blocksbuilder.BuilderState;
 import com.rvandoosselaer.jmeutils.gui.GuiUtils;
 import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
@@ -54,10 +55,14 @@ public class BlocksState extends BaseAppState {
     private ExtendedGridPanel blocksGrid;
     private String filterPlaceholderText = "Filter...";
     private VersionedReference<DocumentModel> filterRef;
-    private Label selectedBlock;
+    private Label selectedBlockLabel;
+    private BuilderState builderState;
+    private VersionedReference<Block> selectedBlockRef;
 
     @Override
     protected void initialize(Application app) {
+        builderState = getState(BuilderState.class);
+        selectedBlockRef = builderState.getSelectedBlock().createReference();
         blocksContainer = layout(createBlocksContainer());
 
         if (node == null) {
@@ -83,8 +88,14 @@ public class BlocksState extends BaseAppState {
     public void update(float tpf) {
         layout(blocksContainer);
 
+        // update the filter
         if (filterRef.update()) {
             filterBlocks(filterRef.get().getText());
+        }
+
+        // update the selected block
+        if (selectedBlockRef.update()) {
+            selectedBlockLabel.setText(selectedBlockRef.get().getName());
         }
     }
 
@@ -129,8 +140,8 @@ public class BlocksState extends BaseAppState {
 
         Container selectedBlockWrapper = container.addChild(new Container(new BorderLayout(), new ElementId("wrapper")));
         selectedBlockWrapper.addChild(new Label("Block: "), BorderLayout.Position.West);
-        selectedBlock = selectedBlockWrapper.addChild(new Label("", new ElementId(Label.ELEMENT_ID).child("value.label")), BorderLayout.Position.Center);
-        selectedBlock.setTextHAlignment(HAlignment.Left);
+        selectedBlockLabel = selectedBlockWrapper.addChild(new Label(selectedBlockRef.get().getName(), new ElementId(Label.ELEMENT_ID).child("value.label")), BorderLayout.Position.Center);
+        selectedBlockLabel.setTextHAlignment(HAlignment.Left);
 
         return container;
     }
@@ -160,7 +171,7 @@ public class BlocksState extends BaseAppState {
             icon.setVAlignment(VAlignment.Center);
             icon.setIconSize(new Vector2f(50, 50));
             button.setIcon(icon);
-            button.addClickCommands(btn -> selectedBlock.setText(block.getName()));
+            button.addClickCommands(btn -> onSelectBlock(block));
             grid[row][col++] = button;
 
             if (col >= cols) {
@@ -170,6 +181,10 @@ public class BlocksState extends BaseAppState {
         }
 
         return grid;
+    }
+
+    private void onSelectBlock(Block block) {
+        builderState.setSelectedBlock(block);
     }
 
     @RequiredArgsConstructor

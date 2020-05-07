@@ -11,6 +11,11 @@ import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Quad;
+import com.rvandoosselaer.blocks.Block;
+import com.rvandoosselaer.blocks.BlockIds;
+import com.rvandoosselaer.blocks.BlockRegistry;
+import com.rvandoosselaer.blocks.BlocksConfig;
+import com.simsilica.lemur.core.VersionedHolder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,9 +30,12 @@ public class BuilderState extends BaseAppState {
     @Setter
     private Node node;
     private Geometry grid;
+    @Getter
+    private VersionedHolder<Block> selectedBlock;
 
     @Override
     protected void initialize(Application app) {
+        selectedBlock = new VersionedHolder<>(getDefaultBlock());
         grid = createGrid(app.getAssetManager());
 
         if (node == null) {
@@ -47,6 +55,15 @@ public class BuilderState extends BaseAppState {
     @Override
     protected void onDisable() {
         grid.removeFromParent();
+    }
+
+    public void setSelectedBlock(Block block) {
+        selectedBlock.setObject(block);
+    }
+
+    private Block getDefaultBlock() {
+        BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
+        return blockRegistry.get(BlockIds.GRASS);
     }
 
     private Geometry createGrid(AssetManager assetManager) {
