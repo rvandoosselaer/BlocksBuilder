@@ -92,11 +92,13 @@ public class BuilderState extends BaseAppState {
         if (parentNode == null) {
             parentNode = ((SimpleApplication) app).getRootNode();
         }
+        parentNode.attachChild(builderNode);
     }
 
     @Override
     protected void cleanup(Application app) {
         builderNode.detachAllChildren();
+        builderNode.removeFromParent();
         inputMapper.removeStateListener(inputListener, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
         inputMapper.removeAnalogListener(inputListener, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
         chunkManager.removeListener(chunkListener);
@@ -104,14 +106,11 @@ public class BuilderState extends BaseAppState {
 
     @Override
     protected void onEnable() {
-        parentNode.attachChild(builderNode);
-
         inputMapper.activateGroup(InputFunctions.BUILDER_INPUT_GROUP);
     }
 
     @Override
     protected void onDisable() {
-        builderNode.removeFromParent();
         addBlockPlaceholder.removeFromParent();
         removeBlockPlaceholder.removeFromParent();
 
@@ -134,6 +133,18 @@ public class BuilderState extends BaseAppState {
 
     public void setSelectedBlock(Block block) {
         selectedBlock.setObject(block);
+    }
+
+    public void clearScene() {
+        // detach and remove the old chunk
+        if (chunkNode != null) {
+            chunkNode.removeFromParent();
+        }
+        chunkManager.removeChunk(chunk);
+        // create and set new chunk
+        chunk = Chunk.createAt(new Vec3i(0, 0, 0));
+        chunkNode = chunk.getNode();
+        chunkManager.setChunk(chunk);
     }
 
     private Block getDefaultBlock() {
@@ -190,6 +201,7 @@ public class BuilderState extends BaseAppState {
     private void positionAddBlockPlaceholder(CollisionResult collisionResult) {
         Vec3i addBlockLocation = ChunkManager.getNeighbourBlockLocation(collisionResult);
         if (!chunk.containsLocation(addBlockLocation)) {
+            addBlockPlaceholder.removeFromParent();
             return;
         }
 

@@ -5,12 +5,19 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;
 import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Node;
+import com.rvandoosselaer.blocksbuilder.BuilderState;
+import com.rvandoosselaer.blocksbuilder.CameraState;
 import com.rvandoosselaer.jmeutils.gui.GuiUtils;
 import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
+import com.simsilica.lemur.CallMethodAction;
 import com.simsilica.lemur.Container;
+import com.simsilica.lemur.EmptyAction;
 import com.simsilica.lemur.FillMode;
+import com.simsilica.lemur.HAlignment;
 import com.simsilica.lemur.Label;
+import com.simsilica.lemur.OptionPanel;
+import com.simsilica.lemur.OptionPanelState;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.component.TbtQuadBackgroundComponent;
 import com.simsilica.lemur.style.ElementId;
@@ -30,11 +37,16 @@ public class MenuState extends BaseAppState {
     @Setter
     private Node node;
     private Container menu;
+    private CameraState cameraState;
+    private BuilderState builderState;
+    private OptionPanelState optionPanelState;
 
     @Override
     protected void initialize(Application app) {
         menu = layout(createMenu());
-
+        cameraState = getState(CameraState.class);
+        builderState = getState(BuilderState.class);
+        optionPanelState = getState(OptionPanelState.class);
 
         if (node == null) {
             node = ((SimpleApplication) app).getGuiNode();
@@ -81,7 +93,11 @@ public class MenuState extends BaseAppState {
     }
 
     private void onNew() {
+        builderState.setEnabled(false);
+        cameraState.setEnabled(false);
 
+        OptionPanel optionPanel = createOnNewPopup();
+        optionPanelState.show(optionPanel);
     }
 
     private Container layout(Container menu) {
@@ -89,6 +105,32 @@ public class MenuState extends BaseAppState {
         menu.setLocalTranslation(margin, GuiUtils.getHeight() - margin, 99);
 
         return menu;
+    }
+
+    /**
+     * Create the option panel for when the 'New' button is clicked.
+     * Any button that is clicked in the panel, will also call the builderState#setEnabled(true) and
+     * cameraState#setEnabled(true) methods.
+     */
+    private OptionPanel createOnNewPopup() {
+        OptionPanel optionPanel = new OptionPanel("New scene", "Creating a new scene will remove any unsaved " +
+                "changes.\nAre you sure you want to continue?", null,
+                new CallMethodAction("Yes", builderState, "clearScene"),
+                new EmptyAction("No"));
+        ColorRGBA colorRGBA = ((TbtQuadBackgroundComponent) optionPanel.getBackground()).getColor();
+        colorRGBA.set(colorRGBA.r, colorRGBA.g, colorRGBA.b, 0.9f);
+
+        for (Node button : optionPanel.getButtons().getLayout().getChildren()) {
+            if (button instanceof Button) {
+                ((Button) button).setTextHAlignment(HAlignment.Center);
+                ((Button) button).addClickCommands(source -> {
+                    builderState.setEnabled(true);
+                    cameraState.setEnabled(true);
+                });
+            }
+        }
+
+        return optionPanel;
     }
 
     private Container createMenu() {

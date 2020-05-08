@@ -21,6 +21,7 @@ import com.rvandoosselaer.jmeutils.util.LogUtils;
 import com.simsilica.fx.LightingState;
 import com.simsilica.fx.sky.SkyState;
 import com.simsilica.lemur.GuiGlobals;
+import com.simsilica.lemur.OptionPanelState;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.style.BaseStyles;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ public class Main extends SimpleApplication {
         super(new FilterPostProcessorState(),
                 new LightingState(),
                 new PostProcessingState(),
+                new OptionPanelState(),
                 new ChunkManagerState(new ChunkManager(1)),
                 new BuilderState(),
                 new MenuState(),
