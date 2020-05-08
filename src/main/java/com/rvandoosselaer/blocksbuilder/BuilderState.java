@@ -29,12 +29,14 @@ import com.rvandoosselaer.blocks.ChunkManagerState;
 import com.rvandoosselaer.jmeutils.util.GeometryUtils;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.core.VersionedHolder;
+import com.simsilica.lemur.input.AnalogFunctionListener;
 import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
 import com.simsilica.lemur.input.StateFunctionListener;
 import com.simsilica.mathd.Vec3i;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,7 +48,7 @@ import java.util.Objects;
  * @author: rvandoosselaer
  */
 @Slf4j
-public class BuilderState extends BaseAppState implements StateFunctionListener {
+public class BuilderState extends BaseAppState {
 
     @Getter
     @Setter
@@ -63,6 +65,7 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     private ChunkManager chunkManager;
     private Chunk chunk;
     private ChunkListener chunkListener;
+    private InputFunctionListener inputListener;
 
     @Override
     protected void initialize(Application app) {
@@ -81,8 +84,10 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
         builderNode = new Node("Builder node");
         builderNode.attachChild(grid);
 
+        inputListener = new InputFunctionListener(125);
         inputMapper = GuiGlobals.getInstance().getInputMapper();
-        inputMapper.addStateListener(this, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
+        inputMapper.addStateListener(inputListener, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
+        inputMapper.addAnalogListener(inputListener, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
 
         if (parentNode == null) {
             parentNode = ((SimpleApplication) app).getRootNode();
@@ -92,7 +97,8 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     @Override
     protected void cleanup(Application app) {
         builderNode.detachAllChildren();
-        inputMapper.removeStateListener(this, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
+        inputMapper.removeStateListener(inputListener, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
+        inputMapper.removeAnalogListener(inputListener, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
         chunkManager.removeListener(chunkListener);
     }
 
@@ -123,18 +129,6 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
         } else {
             addBlockPlaceholder.removeFromParent();
             removeBlockPlaceholder.removeFromParent();
-        }
-    }
-
-    @Override
-    public void valueChanged(FunctionId func, InputState value, double tpf) {
-        // when we are dragging, hide the placeholders
-        if (Objects.equals(func, InputFunctions.F_DRAG)) {
-            dragging = InputState.Off != value;
-        } else if (Objects.equals(func, InputFunctions.F_PLACE_BLOCK) && InputState.Positive == value) {
-            addBlock();
-        } else if (Objects.equals(func, InputFunctions.F_REMOVE_BLOCK) && InputState.Positive == value) {
-            removeBlock();
         }
     }
 
@@ -250,6 +244,46 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
 
         @Override
         public void onChunkAvailable(Chunk chunk) {
+        }
+
+    }
+
+    @RequiredArgsConstructor
+    private class InputFunctionListener implements StateFunctionListener, AnalogFunctionListener {
+
+        private boolean pressed;
+        private long lastClickTimestamp;
+        // time between consecutive clicks in milliseconds
+        private final int clickInterval;
+
+        @Override
+        public void valueActive(FunctionId func, double value, double tpf) {
+            if (pressed) {
+                long currentTimestamp = System.currentTimeMillis();
+                // only click x times / second
+                boolean shouldClick = lastClickTimestamp + clickInterval <= currentTimestamp;
+                if (shouldClick) {
+                    if (Objects.equals(func, InputFunctions.F_PLACE_BLOCK)) {
+                        addBlock();
+                    } else if (Objects.equals(func, InputFunctions.F_REMOVE_BLOCK)) {
+                        removeBlock();
+                    }
+                    lastClickTimestamp = currentTimestamp;
+                }
+            }
+        }
+
+        public void valueChanged(FunctionId func, InputState value, double tpf) {
+            // when we are dragging, hide the placeholders
+            if (Objects.equals(func, InputFunctions.F_DRAG)) {
+                dragging = InputState.Off != value;
+            } else if (Objects.equals(func, InputFunctions.F_PLACE_BLOCK) || Objects.equals(func, InputFunctions.F_REMOVE_BLOCK)) {
+                // reset the timestamp when we are done clicking
+                pressed = InputState.Off != value;
+                if (!pressed) {
+                    lastClickTimestamp = -1;
+                }
+            }
         }
 
     }
