@@ -17,6 +17,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.rvandoosselaer.blocksbuilder.InputFunctions.CAMERA_INPUT_GROUP;
+import static com.rvandoosselaer.blocksbuilder.InputFunctions.F_BOUNCE;
 import static com.rvandoosselaer.blocksbuilder.InputFunctions.F_CENTER;
 import static com.rvandoosselaer.blocksbuilder.InputFunctions.F_DRAG;
 import static com.rvandoosselaer.blocksbuilder.InputFunctions.F_MOVE;
@@ -142,13 +143,13 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
         targetLocation.set(startingTargetLocation);
 
         inputMapper = GuiGlobals.getInstance().getInputMapper();
-        inputMapper.addAnalogListener(this, F_X_ROTATE, F_Y_ROTATE, F_ZOOM, F_MOVE, F_STRAFE);
+        inputMapper.addAnalogListener(this, F_X_ROTATE, F_Y_ROTATE, F_ZOOM, F_MOVE, F_STRAFE, F_BOUNCE);
         inputMapper.addStateListener(this, F_DRAG, F_CENTER);
     }
 
     @Override
     protected void cleanup(Application app) {
-        inputMapper.removeAnalogListener(this, F_X_ROTATE, F_Y_ROTATE, F_ZOOM, F_MOVE, F_STRAFE);
+        inputMapper.removeAnalogListener(this, F_X_ROTATE, F_Y_ROTATE, F_ZOOM, F_MOVE, F_STRAFE, F_BOUNCE);
         inputMapper.removeStateListener(this, F_DRAG, F_CENTER);
 
         // reset the camera position
@@ -180,6 +181,9 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
             chasing = true;
         } else if (func == F_STRAFE) {
             calculateStrafe(value, tpf);
+            chasing = true;
+        } else if (func == F_BOUNCE) {
+            calculateBounce(value, tpf);
             chasing = true;
         }
     }
@@ -288,4 +292,12 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
         targetLocation.addLocal(strafe);
     }
 
+    /**
+     * Calculate the up/down movement
+     */
+    private void calculateBounce(double value, double tpf) {
+        Vector3f upDir = Vector3f.UNIT_Y.mult((float) (value * moveSpeed * tpf));
+
+        targetLocation.addLocal(upDir);
+    }
 }

@@ -27,6 +27,7 @@ public class InputFunctions {
     public static final FunctionId F_DRAG = new FunctionId(CAMERA_INPUT_GROUP, "drag");
     public static final FunctionId F_MOVE = new FunctionId(CAMERA_INPUT_GROUP, "move");
     public static final FunctionId F_STRAFE = new FunctionId(CAMERA_INPUT_GROUP, "strafe");
+    public static final FunctionId F_BOUNCE = new FunctionId(CAMERA_INPUT_GROUP, "bounce");
     public static final FunctionId F_CENTER = new FunctionId(CAMERA_INPUT_GROUP, "center");
 
     // builder input
@@ -51,6 +52,8 @@ public class InputFunctions {
         inputMapper.map(F_STRAFE, InputState.Negative, KeyInput.KEY_RIGHT);
         inputMapper.map(F_STRAFE, KeyInput.KEY_A);
         inputMapper.map(F_STRAFE, KeyInput.KEY_LEFT);
+        inputMapper.map(F_BOUNCE, KeyInput.KEY_Q);
+        inputMapper.map(F_BOUNCE, InputState.Negative, KeyInput.KEY_Z);
         inputMapper.map(F_CENTER, KeyInput.KEY_HOME);
 
         inputMapper.map(F_PLACE_BLOCK, Button.MOUSE_BUTTON1);
@@ -66,6 +69,7 @@ public class InputFunctions {
         inputMapper.getMappings(F_DRAG).forEach(inputMapper::removeMapping);
         inputMapper.getMappings(F_MOVE).forEach(inputMapper::removeMapping);
         inputMapper.getMappings(F_STRAFE).forEach(inputMapper::removeMapping);
+        inputMapper.getMappings(F_BOUNCE).forEach(inputMapper::removeMapping);
         inputMapper.getMappings(F_CENTER).forEach(inputMapper::removeMapping);
 
         inputMapper.getMappings(F_PLACE_BLOCK).forEach(inputMapper::removeMapping);
