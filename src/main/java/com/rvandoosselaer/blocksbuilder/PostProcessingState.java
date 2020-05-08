@@ -3,7 +3,6 @@ package com.rvandoosselaer.blocksbuilder;
 import com.jme3.app.Application;
 import com.jme3.app.state.BaseAppState;
 import com.jme3.light.DirectionalLight;
-import com.jme3.math.ColorRGBA;
 import com.jme3.post.filters.FXAAFilter;
 import com.jme3.post.ssao.SSAOFilter;
 import com.jme3.shadow.DirectionalLightShadowFilter;
@@ -27,13 +26,7 @@ public class PostProcessingState extends BaseAppState {
     @Override
     protected void initialize(Application app) {
         fpps = getState(FilterPostProcessorState.class);
-        LightingState lightingState = getState(LightingState.class);
-        lightingState.setOrientation(4.215f);
-        lightingState.setTimeOfDay(0.203f);
-        lightingState.setSunColor(new ColorRGBA(1.5f, 1.5f, 1.5f, 1));
-        lightingState.setAmbient(new ColorRGBA(0.3f, 0.3f, 0.3f, 1));
-        directionalLight = lightingState.getSun();
-
+        directionalLight = getState(LightingState.class).getSun();
 
         dlsf = createDirectionalLightFilter();
         ssaoFilter = createSSAOFilter();

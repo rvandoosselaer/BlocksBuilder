@@ -16,12 +16,15 @@ import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.debug.WireBox;
+import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Quad;
 import com.rvandoosselaer.blocks.Block;
 import com.rvandoosselaer.blocks.BlockIds;
 import com.rvandoosselaer.blocks.BlockRegistry;
 import com.rvandoosselaer.blocks.BlocksConfig;
+import com.rvandoosselaer.blocks.Chunk;
 import com.rvandoosselaer.blocks.ChunkManager;
+import com.rvandoosselaer.blocks.ChunkManagerState;
 import com.rvandoosselaer.jmeutils.util.GeometryUtils;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.core.VersionedHolder;
@@ -52,16 +55,26 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     private VersionedHolder<Block> selectedBlock;
     private Geometry grid;
     private Geometry addBlockPlaceholder;
+    private Geometry removeBlockPlaceholder;
     private InputMapper inputMapper;
     private boolean dragging;
+    private ChunkManager chunkManager;
+    private Chunk chunk;
 
     @Override
     protected void initialize(Application app) {
         selectedBlock = new VersionedHolder<>(getDefaultBlock());
+        chunk = Chunk.createAt(new Vec3i(0, 0, 0));
+        chunkManager = getState(ChunkManagerState.class).getChunkManager();
+        chunkManager.setChunk(chunk);
+
         grid = createGrid(app.getAssetManager());
         addBlockPlaceholder = createAddBlockPlaceholder();
+        removeBlockPlaceholder = createRemoveBlockPlaceholder();
+
         builderNode = new Node("Builder node");
         builderNode.attachChild(grid);
+
         inputMapper = GuiGlobals.getInstance().getInputMapper();
         inputMapper.addStateListener(this, InputFunctions.F_DRAG);
 
@@ -85,6 +98,7 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     protected void onDisable() {
         builderNode.removeFromParent();
         addBlockPlaceholder.removeFromParent();
+        removeBlockPlaceholder.removeFromParent();
     }
 
     @Override
@@ -94,11 +108,10 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
 
         if (collisionResult != null) {
             positionAddBlockPlaceholder(collisionResult);
-            if (addBlockPlaceholder.getParent() == null) {
-                parentNode.attachChild(addBlockPlaceholder);
-            }
+            positionRemoveBlockPlaceholder(collisionResult);
         } else {
             addBlockPlaceholder.removeFromParent();
+            removeBlockPlaceholder.removeFromParent();
         }
     }
 
@@ -120,11 +133,12 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     }
 
     private Geometry createGrid(AssetManager assetManager) {
-        Geometry grid = new Geometry("grid", new Quad(32, 32));
+        Vector3f chunkSize = BlocksConfig.getInstance().getChunkSize().toVector3f();
+        Geometry grid = new Geometry("grid", new Quad(chunkSize.x, chunkSize.z));
         grid.setMaterial(assetManager.loadMaterial("Materials/grid.j3m"));
         grid.setLocalRotation(new Quaternion().fromAngleAxis(-FastMath.HALF_PI, Vector3f.UNIT_X));
-        // center the grid and lower it a bit to counter z-fighting with the blocks
-        grid.setLocalTranslation(-16, -0.01f, 16);
+        // position the grid and lower it a bit to counter z-fighting with the blocks
+        grid.setLocalTranslation(0, -0.01f, chunkSize.z);
         grid.setShadowMode(RenderQueue.ShadowMode.Receive);
 
         return grid;
@@ -136,6 +150,17 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
                 .multLocal(0.5f);
 
         return GeometryUtils.createGeometry(new WireBox(blockSizeExtents.x, blockSizeExtents.y, blockSizeExtents.z), ColorRGBA.Yellow, false);
+    }
+
+    private Geometry createRemoveBlockPlaceholder() {
+        Vector3f blockSizeExtents = new Vector3f(1, 1, 1)
+                .multLocal(BlocksConfig.getInstance().getBlockScale())
+                .multLocal(0.5f);
+
+        Geometry geometry = new Geometry("remove block", new Box(blockSizeExtents.x, blockSizeExtents.y, blockSizeExtents.z));
+        geometry.setMaterial(getApplication().getAssetManager().loadMaterial("/Materials/remove-block.j3m"));
+
+        return geometry;
     }
 
     private CollisionResult getCursorCollision() {
@@ -155,8 +180,31 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
 
     private void positionAddBlockPlaceholder(CollisionResult collisionResult) {
         Vec3i addBlockLocation = ChunkManager.getNeighbourBlockLocation(collisionResult);
+        if (!chunk.containsLocation(addBlockLocation)) {
+            return;
+        }
+
         Vector3f blockCenter = ChunkManager.getBlockCenterLocation(addBlockLocation);
         addBlockPlaceholder.setLocalTranslation(blockCenter);
+
+        if (addBlockPlaceholder.getParent() == null) {
+            parentNode.attachChild(addBlockPlaceholder);
+        }
+    }
+
+    private void positionRemoveBlockPlaceholder(CollisionResult collisionResult) {
+        Vec3i removeBlockLocation = ChunkManager.getBlockLocation(collisionResult);
+        if (!chunk.containsLocation(removeBlockLocation)) {
+            return;
+        }
+
+        Vector3f blockCenter = ChunkManager.getBlockCenterLocation(removeBlockLocation);
+        removeBlockPlaceholder.setLocalTranslation(blockCenter);
+
+        boolean attachPlaceholder = removeBlockPlaceholder.getParent() == null && chunk.getBlock(removeBlockLocation) != null;
+        if (attachPlaceholder) {
+            parentNode.attachChild(removeBlockPlaceholder);
+        }
     }
 
 }

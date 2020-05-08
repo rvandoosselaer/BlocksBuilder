@@ -13,6 +13,7 @@ import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
 import com.simsilica.lemur.input.StateFunctionListener;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.rvandoosselaer.blocksbuilder.InputFunctions.CAMERA_INPUT_GROUP;
@@ -82,7 +83,13 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
      */
     private final Vector3f cameraPosition = new Vector3f();
     /**
-     * camera focus point
+     * original camera focus point. The camera will move to this point when the F_CENTER function is triggered.
+     */
+    @Getter
+    @Setter
+    private Vector3f startingTargetLocation = new Vector3f();
+    /**
+     * current camera focus point
      */
     @Getter
     private Vector3f targetLocation = new Vector3f();
@@ -132,9 +139,9 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
     protected void initialize(Application app) {
         camera = app.getCamera();
         upVector = camera.getUp(new Vector3f());
+        targetLocation.set(startingTargetLocation);
 
         inputMapper = GuiGlobals.getInstance().getInputMapper();
-
         inputMapper.addAnalogListener(this, F_X_ROTATE, F_Y_ROTATE, F_ZOOM, F_MOVE, F_STRAFE);
         inputMapper.addStateListener(this, F_DRAG, F_CENTER);
     }
@@ -184,7 +191,7 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
             dragging = value != InputState.Off;
             GuiGlobals.getInstance().setCursorEventsEnabled(!dragging);
         } else if (func == F_CENTER && value != InputState.Off) {
-            targetLocation.set(Vector3f.ZERO);
+            targetLocation.set(startingTargetLocation);
         }
     }
 

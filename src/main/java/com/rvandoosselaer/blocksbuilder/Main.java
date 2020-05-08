@@ -3,9 +3,12 @@ package com.rvandoosselaer.blocksbuilder;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.TechniqueDef;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector3f;
 import com.jme3.renderer.Limits;
 import com.jme3.system.AppSettings;
 import com.rvandoosselaer.blocks.BlocksConfig;
+import com.rvandoosselaer.blocks.ChunkManager;
+import com.rvandoosselaer.blocks.ChunkManagerState;
 import com.rvandoosselaer.blocksbuilder.gui.BlocksState;
 import com.rvandoosselaer.blocksbuilder.gui.CameraPivotPointState;
 import com.rvandoosselaer.blocksbuilder.gui.CoordinateAxesState;
@@ -39,6 +42,7 @@ public class Main extends SimpleApplication {
         super(new FilterPostProcessorState(),
                 new LightingState(),
                 new PostProcessingState(),
+                new ChunkManagerState(new ChunkManager(1)),
                 new BuilderState(),
                 new MenuState(),
                 new BlocksState(),
@@ -60,18 +64,18 @@ public class Main extends SimpleApplication {
         ApplicationGlobals.initialize(this);
         BlocksConfig.initialize(assetManager);
 
-        BaseStyles.loadGlassStyle();
-        GuiGlobals.getInstance().getStyles().setDefaultStyle(BaseStyles.GLASS);
+        loadGUIStyle();
 
-        removeDefaultMappings();
+        removeDefaultKeyMappings();
+
+        setupCamera();
+
+        setupLights();
+
+        loadKeyMappings();
 
         int anisotropicFilter = renderer.getLimits().getOrDefault(Limits.TextureAnisotropy, 1);
         renderer.setDefaultAnisotropicFilter(anisotropicFilter);
-        renderManager.setSinglePassLightBatchSize(3);
-        renderManager.setPreferredLightMode(TechniqueDef.LightMode.SinglePassAndImageBased);
-
-        InputMapper inputMapper = GuiGlobals.getInstance().getInputMapper();
-        InputFunctions.initializeDefaultMappings(inputMapper);
     }
 
     @Override
@@ -86,8 +90,36 @@ public class Main extends SimpleApplication {
         return settings;
     }
 
-    private void removeDefaultMappings() {
+    private void loadGUIStyle() {
+        BaseStyles.loadGlassStyle();
+        GuiGlobals.getInstance().getStyles().setDefaultStyle(BaseStyles.GLASS);
+    }
+
+    private void removeDefaultKeyMappings() {
         getInputManager().deleteMapping(SimpleApplication.INPUT_MAPPING_EXIT);
+    }
+
+    private void setupCamera() {
+        Vector3f chunkSize = BlocksConfig.getInstance().getChunkSize().toVector3f();
+        Vector3f cameraPivotPoint = new Vector3f(chunkSize.x * 0.5f, 0, chunkSize.z * 0.5f);
+        CameraState cameraState = stateManager.getState(CameraState.class);
+        cameraState.setStartingTargetLocation(cameraPivotPoint);
+    }
+
+    private void setupLights() {
+        LightingState lightingState = stateManager.getState(LightingState.class);
+        lightingState.setOrientation(4.215f);
+        lightingState.setTimeOfDay(0.203f);
+        lightingState.setSunColor(new ColorRGBA(1.5f, 1.5f, 1.5f, 1));
+        lightingState.setAmbient(new ColorRGBA(0.3f, 0.3f, 0.3f, 1));
+
+        renderManager.setSinglePassLightBatchSize(3);
+        renderManager.setPreferredLightMode(TechniqueDef.LightMode.SinglePassAndImageBased);
+    }
+
+    private void loadKeyMappings() {
+        InputMapper inputMapper = GuiGlobals.getInstance().getInputMapper();
+        InputFunctions.initializeDefaultMappings(inputMapper);
     }
 
 }

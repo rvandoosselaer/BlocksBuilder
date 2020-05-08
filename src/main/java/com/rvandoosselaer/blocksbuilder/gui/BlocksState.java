@@ -139,7 +139,7 @@ public class BlocksState extends BaseAppState {
         blocksGrid = container.addChild(new ExtendedGridPanel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), 4))));
 
         Container selectedBlockWrapper = container.addChild(new Container(new BorderLayout(), new ElementId("wrapper")));
-        selectedBlockWrapper.addChild(new Label("Block: "), BorderLayout.Position.West);
+        selectedBlockWrapper.addChild(new Label("Selected block: "), BorderLayout.Position.West);
         selectedBlockLabel = selectedBlockWrapper.addChild(new Label(selectedBlockRef.get().getName(), new ElementId(Label.ELEMENT_ID).child("value.label")), BorderLayout.Position.Center);
         selectedBlockLabel.setTextHAlignment(HAlignment.Left);
 
