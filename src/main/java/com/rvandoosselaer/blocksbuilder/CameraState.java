@@ -297,7 +297,6 @@ public class CameraState extends BaseAppState implements AnalogFunctionListener,
      */
     private void calculateBounce(double value, double tpf) {
         Vector3f upDir = Vector3f.UNIT_Y.mult((float) (value * moveSpeed * tpf));
-
         targetLocation.addLocal(upDir);
     }
 }
