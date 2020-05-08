@@ -24,6 +24,7 @@ import com.rvandoosselaer.blocks.BlockRegistry;
 import com.rvandoosselaer.blocks.BlocksConfig;
 import com.rvandoosselaer.blocks.Chunk;
 import com.rvandoosselaer.blocks.ChunkManager;
+import com.rvandoosselaer.blocks.ChunkManagerListener;
 import com.rvandoosselaer.blocks.ChunkManagerState;
 import com.rvandoosselaer.jmeutils.util.GeometryUtils;
 import com.simsilica.lemur.GuiGlobals;
@@ -51,6 +52,7 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     @Setter
     private Node parentNode;
     private Node builderNode;
+    private Node chunkNode;
     @Getter
     private VersionedHolder<Block> selectedBlock;
     private Geometry grid;
@@ -60,13 +62,17 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     private boolean dragging;
     private ChunkManager chunkManager;
     private Chunk chunk;
+    private ChunkListener chunkListener;
 
     @Override
     protected void initialize(Application app) {
         selectedBlock = new VersionedHolder<>(getDefaultBlock());
         chunk = Chunk.createAt(new Vec3i(0, 0, 0));
+        chunkNode = chunk.getNode();
+        chunkListener = new ChunkListener();
         chunkManager = getState(ChunkManagerState.class).getChunkManager();
         chunkManager.setChunk(chunk);
+        chunkManager.addListener(chunkListener);
 
         grid = createGrid(app.getAssetManager());
         addBlockPlaceholder = createAddBlockPlaceholder();
@@ -76,7 +82,7 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
         builderNode.attachChild(grid);
 
         inputMapper = GuiGlobals.getInstance().getInputMapper();
-        inputMapper.addStateListener(this, InputFunctions.F_DRAG);
+        inputMapper.addStateListener(this, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
 
         if (parentNode == null) {
             parentNode = ((SimpleApplication) app).getRootNode();
@@ -86,12 +92,15 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     @Override
     protected void cleanup(Application app) {
         builderNode.detachAllChildren();
-        inputMapper.removeStateListener(this, InputFunctions.F_DRAG);
+        inputMapper.removeStateListener(this, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
+        chunkManager.removeListener(chunkListener);
     }
 
     @Override
     protected void onEnable() {
         parentNode.attachChild(builderNode);
+
+        inputMapper.activateGroup(InputFunctions.BUILDER_INPUT_GROUP);
     }
 
     @Override
@@ -99,6 +108,8 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
         builderNode.removeFromParent();
         addBlockPlaceholder.removeFromParent();
         removeBlockPlaceholder.removeFromParent();
+
+        inputMapper.deactivateGroup(InputFunctions.BUILDER_INPUT_GROUP);
     }
 
     @Override
@@ -120,6 +131,10 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
         // when we are dragging, hide the placeholders
         if (Objects.equals(func, InputFunctions.F_DRAG)) {
             dragging = InputState.Off != value;
+        } else if (Objects.equals(func, InputFunctions.F_PLACE_BLOCK) && InputState.Positive == value) {
+            addBlock();
+        } else if (Objects.equals(func, InputFunctions.F_REMOVE_BLOCK) && InputState.Positive == value) {
+            removeBlock();
         }
     }
 
@@ -147,7 +162,7 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     private Geometry createAddBlockPlaceholder() {
         Vector3f blockSizeExtents = new Vector3f(1, 1, 1)
                 .multLocal(BlocksConfig.getInstance().getBlockScale())
-                .multLocal(0.5f);
+                .multLocal(0.495f);
 
         return GeometryUtils.createGeometry(new WireBox(blockSizeExtents.x, blockSizeExtents.y, blockSizeExtents.z), ColorRGBA.Yellow, false);
     }
@@ -155,7 +170,7 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     private Geometry createRemoveBlockPlaceholder() {
         Vector3f blockSizeExtents = new Vector3f(1, 1, 1)
                 .multLocal(BlocksConfig.getInstance().getBlockScale())
-                .multLocal(0.5f);
+                .multLocal(0.505f);
 
         Geometry geometry = new Geometry("remove block", new Box(blockSizeExtents.x, blockSizeExtents.y, blockSizeExtents.z));
         geometry.setMaterial(getApplication().getAssetManager().loadMaterial("/Materials/remove-block.j3m"));
@@ -195,16 +210,47 @@ public class BuilderState extends BaseAppState implements StateFunctionListener 
     private void positionRemoveBlockPlaceholder(CollisionResult collisionResult) {
         Vec3i removeBlockLocation = ChunkManager.getBlockLocation(collisionResult);
         if (!chunk.containsLocation(removeBlockLocation)) {
+            removeBlockPlaceholder.removeFromParent();
             return;
         }
 
         Vector3f blockCenter = ChunkManager.getBlockCenterLocation(removeBlockLocation);
         removeBlockPlaceholder.setLocalTranslation(blockCenter);
 
-        boolean attachPlaceholder = removeBlockPlaceholder.getParent() == null && chunk.getBlock(removeBlockLocation) != null;
-        if (attachPlaceholder) {
+        boolean isAttached = removeBlockPlaceholder.getParent() != null;
+        boolean shouldAttach = chunkManager.getBlock(collisionResult).isPresent();
+
+        if (!isAttached && shouldAttach) {
             parentNode.attachChild(removeBlockPlaceholder);
+        } else {
+            removeBlockPlaceholder.removeFromParent();
         }
+
     }
 
+    private void addBlock() {
+        chunkManager.addBlock(addBlockPlaceholder.getWorldTranslation(), selectedBlock.getObject());
+    }
+
+    private void removeBlock() {
+        chunkManager.removeBlock(removeBlockPlaceholder.getWorldTranslation());
+    }
+
+    private class ChunkListener implements ChunkManagerListener {
+
+        @Override
+        public void onChunkUpdated(Chunk newChunk) {
+            // detach the old chunk and attach the new node
+            if (chunkNode != null && chunkNode.getParent() != null) {
+                chunkNode.removeFromParent();
+            }
+            builderNode.attachChild(newChunk.getNode());
+            chunkNode = newChunk.getNode();
+        }
+
+        @Override
+        public void onChunkAvailable(Chunk chunk) {
+        }
+
+    }
 }

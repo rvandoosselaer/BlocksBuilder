@@ -18,6 +18,7 @@ public class InputFunctions {
 
     // groups
     public static final String CAMERA_INPUT_GROUP = "camera.input";
+    public static final String BUILDER_INPUT_GROUP = "builder.input";
 
     // camera input
     public static final FunctionId F_X_ROTATE = new FunctionId(CAMERA_INPUT_GROUP, "x-rotate");
@@ -27,6 +28,10 @@ public class InputFunctions {
     public static final FunctionId F_MOVE = new FunctionId(CAMERA_INPUT_GROUP, "move");
     public static final FunctionId F_STRAFE = new FunctionId(CAMERA_INPUT_GROUP, "strafe");
     public static final FunctionId F_CENTER = new FunctionId(CAMERA_INPUT_GROUP, "center");
+
+    // builder input
+    public static final FunctionId F_PLACE_BLOCK = new FunctionId(BUILDER_INPUT_GROUP, "place-block");
+    public static final FunctionId F_REMOVE_BLOCK = new FunctionId(BUILDER_INPUT_GROUP, "remove-block");
 
     public static void initializeDefaultMappings(InputMapper inputMapper) {
         // pitch movement (nose up / down) is done with the mouse Y-axis
@@ -48,6 +53,9 @@ public class InputFunctions {
         inputMapper.map(F_STRAFE, KeyInput.KEY_LEFT);
         inputMapper.map(F_CENTER, KeyInput.KEY_HOME);
 
+        inputMapper.map(F_PLACE_BLOCK, Button.MOUSE_BUTTON1);
+        inputMapper.map(F_REMOVE_BLOCK, Button.MOUSE_BUTTON2);
+
         log.trace("Initialized input mappings.");
     }
 
@@ -59,6 +67,9 @@ public class InputFunctions {
         inputMapper.getMappings(F_MOVE).forEach(inputMapper::removeMapping);
         inputMapper.getMappings(F_STRAFE).forEach(inputMapper::removeMapping);
         inputMapper.getMappings(F_CENTER).forEach(inputMapper::removeMapping);
+
+        inputMapper.getMappings(F_PLACE_BLOCK).forEach(inputMapper::removeMapping);
+        inputMapper.getMappings(F_REMOVE_BLOCK).forEach(inputMapper::removeMapping);
 
         log.trace("Removed input mappings.");
     }
