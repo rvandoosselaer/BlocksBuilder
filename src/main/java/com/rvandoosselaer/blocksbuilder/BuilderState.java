@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Objects;
 
 /**
- * An AppState for adding and removing blocks. A grid of 32x32 is rendered around the center (0,0,0) point.
+ * An AppState for adding and removing blocks. A grid of 32x32 is rendered around the center (16,0,16) point.
  *
  * @author: rvandoosselaer
  */
@@ -265,7 +265,7 @@ public class BuilderState extends BaseAppState {
 
         private boolean pressed;
         private long lastClickTimestamp;
-        // time between consecutive clicks in milliseconds
+        // time between consecutive clicks in milliseconds. set to 0 to disable 'repeat' clicking
         private final int clickInterval;
 
         @Override
@@ -274,6 +274,10 @@ public class BuilderState extends BaseAppState {
                 long currentTimestamp = System.currentTimeMillis();
                 // only click x times / second
                 boolean shouldClick = lastClickTimestamp + clickInterval <= currentTimestamp;
+                if (clickInterval <= 0) {
+                    // repeat clicking is disabled, only click when there was not a previous click
+                    shouldClick = lastClickTimestamp <= 0;
+                }
                 if (shouldClick) {
                     if (Objects.equals(func, InputFunctions.F_PLACE_BLOCK)) {
                         addBlock();
