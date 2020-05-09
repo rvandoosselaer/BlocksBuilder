@@ -19,11 +19,13 @@ import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.HAlignment;
 import com.simsilica.lemur.Insets3f;
 import com.simsilica.lemur.Label;
+import com.simsilica.lemur.ListBox;
 import com.simsilica.lemur.OptionPanel;
 import com.simsilica.lemur.OptionPanelState;
 import com.simsilica.lemur.TextField;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.component.TbtQuadBackgroundComponent;
+import com.simsilica.lemur.core.VersionedList;
 import com.simsilica.lemur.style.ElementId;
 import lombok.Getter;
 import lombok.Setter;
@@ -102,7 +104,11 @@ public class MenuState extends BaseAppState {
     }
 
     private void onOpen() {
+        builderState.setEnabled(false);
+        cameraState.setEnabled(false);
 
+        OptionPanel optionPanel = createOnOpenPopup();
+        optionPanelState.show(optionPanel);
     }
 
     private void onNew() {
@@ -120,11 +126,6 @@ public class MenuState extends BaseAppState {
         return menu;
     }
 
-    /**
-     * Create the option panel for when the 'New' button is clicked.
-     * Any button that is clicked in the panel, will also call the builderState#setEnabled(true) and
-     * cameraState#setEnabled(true) methods.
-     */
     private OptionPanel createOnNewPopup() {
         OptionPanel optionPanel = new OptionPanel("New scene", "Creating a new scene will remove any unsaved " +
                 "changes.\nAre you sure you want to continue?", null,
@@ -180,6 +181,38 @@ public class MenuState extends BaseAppState {
 
         // set focus to the textfield
         GuiGlobals.getInstance().requestFocus(filenameTextField);
+
+        return optionPanel;
+    }
+
+    private OptionPanel createOnOpenPopup() {
+        OptionPanel optionPanel = new OptionPanel(null, null);
+        optionPanel.setTitle("Load scene");
+        ListBox<String> scenes = optionPanel.getContainer().addChild(new ListBox<>(new VersionedList<>(builderState.getAllScenes())));
+        scenes.setPreferredSize(scenes.getPreferredSize().setX(256));
+        optionPanel.setOptions(new Action("Load") {
+            @Override
+            public void execute(Button source) {
+                Integer index = scenes.getSelectionModel().getSelection();
+                String scene = index != null ? scenes.getModel().get(index) : null;
+                if (scene != null) {
+                    builderState.loadScene(scene);
+                }
+            }
+        }, new EmptyAction("Cancel"));
+
+        ColorRGBA colorRGBA = ((TbtQuadBackgroundComponent) optionPanel.getBackground()).getColor();
+        colorRGBA.set(colorRGBA.r, colorRGBA.g, colorRGBA.b, 0.9f);
+
+        for (Node button : optionPanel.getButtons().getLayout().getChildren()) {
+            if (button instanceof Button) {
+                ((Button) button).setTextHAlignment(HAlignment.Center);
+                ((Button) button).addClickCommands(source -> {
+                    builderState.setEnabled(true);
+                    cameraState.setEnabled(true);
+                });
+            }
+        }
 
         return optionPanel;
     }

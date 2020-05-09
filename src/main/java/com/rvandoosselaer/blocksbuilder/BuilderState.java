@@ -42,8 +42,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * An AppState for adding and removing blocks. A grid of 32x32 is rendered around the center (16,0,16) point.
@@ -168,14 +173,30 @@ public class BuilderState extends BaseAppState {
     }
 
     public void loadScene(String name) {
-        Chunk loadedChunk = chunkRepository.load(name);
+        Chunk loadedChunk = chunkRepository.load(name + FileRepository.EXTENSION);
         if (loadedChunk != null) {
             clearScene();
             chunk = loadedChunk;
             chunkNode = loadedChunk.getNode();
             chunkManager.setChunk(loadedChunk);
+            chunkManager.requestChunkMeshUpdate(loadedChunk);
             sceneInformation.setFilename(name);
         }
+    }
+
+    public List<String> getAllScenes() {
+        try {
+            return Files.list(chunkRepository.getPath())
+                    .filter(path -> path.getFileName().toString().endsWith(FileRepository.EXTENSION))
+                    .map(path -> path.getFileName().toString())
+                    .map(s -> s.substring(0, s.lastIndexOf(FileRepository.EXTENSION)))
+                    .sorted()
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+
+        return Collections.emptyList();
     }
 
     private Block getDefaultBlock() {
