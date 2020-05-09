@@ -64,7 +64,8 @@ application {
     mainClassName = 'com.rvandoosselaer.blocksbuilder.Main'
     applicationDefaultJvmArgs = [
             "-Dlog4j.configurationFile=[MY_APP_HOME]/conf/log4j2.yml",
-            "-Dapplication.configurationFile=[MY_APP_HOME]/conf/application.properties"
+            "-Dapplication.configurationFile=[MY_APP_HOME]/conf/application.properties",
+            "-Dscene.dir=[MY_APP_HOME]/scenes/"
     ]
 }
 

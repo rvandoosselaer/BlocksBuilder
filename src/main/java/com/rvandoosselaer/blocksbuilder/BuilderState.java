@@ -18,6 +18,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.debug.WireBox;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Quad;
+import com.jme3.system.JmeSystem;
 import com.rvandoosselaer.blocks.Block;
 import com.rvandoosselaer.blocks.BlockIds;
 import com.rvandoosselaer.blocks.BlockRegistry;
@@ -26,6 +27,7 @@ import com.rvandoosselaer.blocks.Chunk;
 import com.rvandoosselaer.blocks.ChunkManager;
 import com.rvandoosselaer.blocks.ChunkManagerListener;
 import com.rvandoosselaer.blocks.ChunkManagerState;
+import com.rvandoosselaer.blocks.FileRepository;
 import com.rvandoosselaer.jmeutils.util.GeometryUtils;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.core.VersionedHolder;
@@ -40,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
@@ -66,6 +69,9 @@ public class BuilderState extends BaseAppState {
     private Chunk chunk;
     private ChunkListener chunkListener;
     private InputFunctionListener inputListener;
+    @Getter
+    private final SceneInformation sceneInformation = new SceneInformation();
+    private FileRepository chunkRepository;
 
     @Override
     protected void initialize(Application app) {
@@ -76,6 +82,13 @@ public class BuilderState extends BaseAppState {
         chunkManager = getState(ChunkManagerState.class).getChunkManager();
         chunkManager.setChunk(chunk);
         chunkManager.addListener(chunkListener);
+        String sceneDir = System.getProperty("scene.dir");
+        if (sceneDir == null) {
+            String jmeStorageFolder = JmeSystem.getStorageFolder().getAbsolutePath();
+            sceneDir = Paths.get(jmeStorageFolder, "BlocksBuilder").toString();
+            log.warn("No scene.dir system property found. Using {} as scene's storage directory.", sceneDir);
+        }
+        chunkRepository = new FileRepository(Paths.get(sceneDir));
 
         grid = createGrid(app.getAssetManager());
         addBlockPlaceholder = createAddBlockPlaceholder();
@@ -145,6 +158,24 @@ public class BuilderState extends BaseAppState {
         chunk = Chunk.createAt(new Vec3i(0, 0, 0));
         chunkNode = chunk.getNode();
         chunkManager.setChunk(chunk);
+        // reset the scene info
+        sceneInformation.clear();
+    }
+
+    public void saveScene(String name) {
+        chunkRepository.save(chunk, name);
+        sceneInformation.save(name);
+    }
+
+    public void loadScene(String name) {
+        Chunk loadedChunk = chunkRepository.load(name);
+        if (loadedChunk != null) {
+            clearScene();
+            chunk = loadedChunk;
+            chunkNode = loadedChunk.getNode();
+            chunkManager.setChunk(loadedChunk);
+            sceneInformation.setFilename(name);
+        }
     }
 
     private Block getDefaultBlock() {

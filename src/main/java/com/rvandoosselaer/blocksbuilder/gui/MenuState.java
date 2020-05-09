@@ -8,16 +8,20 @@ import com.jme3.scene.Node;
 import com.rvandoosselaer.blocksbuilder.BuilderState;
 import com.rvandoosselaer.blocksbuilder.CameraState;
 import com.rvandoosselaer.jmeutils.gui.GuiUtils;
+import com.simsilica.lemur.Action;
 import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
 import com.simsilica.lemur.CallMethodAction;
 import com.simsilica.lemur.Container;
 import com.simsilica.lemur.EmptyAction;
 import com.simsilica.lemur.FillMode;
+import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.HAlignment;
+import com.simsilica.lemur.Insets3f;
 import com.simsilica.lemur.Label;
 import com.simsilica.lemur.OptionPanel;
 import com.simsilica.lemur.OptionPanelState;
+import com.simsilica.lemur.TextField;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.component.TbtQuadBackgroundComponent;
 import com.simsilica.lemur.style.ElementId;
@@ -81,11 +85,20 @@ public class MenuState extends BaseAppState {
     }
 
     private void onSaveAs() {
+        builderState.setEnabled(false);
+        cameraState.setEnabled(false);
 
+        OptionPanel optionPanel = createOnSaveAsPopup();
+        optionPanelState.show(optionPanel);
     }
 
     private void onSave() {
-
+        boolean isSavedBefore = builderState.getSceneInformation().getFilename() != null;
+        if (isSavedBefore) {
+            builderState.saveScene(builderState.getSceneInformation().getFilename());
+        } else {
+            onSaveAs();
+        }
     }
 
     private void onOpen() {
@@ -129,6 +142,44 @@ public class MenuState extends BaseAppState {
                 });
             }
         }
+
+        return optionPanel;
+    }
+
+    private OptionPanel createOnSaveAsPopup() {
+        OptionPanel optionPanel = new OptionPanel(null, null);
+        optionPanel.setTitle("Save scene");
+        Container container = optionPanel.getContainer();
+        Label label = container.addChild(new Label("Filename:"));
+        label.setPreferredSize(label.getPreferredSize().setX(256));
+        label.setInsets(new Insets3f(0, 0, 4, 0));
+        TextField filenameTextField = container.addChild(new TextField(""));
+        filenameTextField.setPreferredSize(filenameTextField.getPreferredSize().setX(256));
+        optionPanel.setOptions(new Action("Save") {
+            @Override
+            public void execute(Button source) {
+                String filename = filenameTextField.getText();
+                if (filename != null && !filename.isEmpty()) {
+                    builderState.saveScene(filenameTextField.getText());
+                }
+            }
+        }, new EmptyAction("Cancel"));
+
+        ColorRGBA colorRGBA = ((TbtQuadBackgroundComponent) optionPanel.getBackground()).getColor();
+        colorRGBA.set(colorRGBA.r, colorRGBA.g, colorRGBA.b, 0.9f);
+
+        for (Node button : optionPanel.getButtons().getLayout().getChildren()) {
+            if (button instanceof Button) {
+                ((Button) button).setTextHAlignment(HAlignment.Center);
+                ((Button) button).addClickCommands(source -> {
+                    builderState.setEnabled(true);
+                    cameraState.setEnabled(true);
+                });
+            }
+        }
+
+        // set focus to the textfield
+        GuiGlobals.getInstance().requestFocus(filenameTextField);
 
         return optionPanel;
     }
