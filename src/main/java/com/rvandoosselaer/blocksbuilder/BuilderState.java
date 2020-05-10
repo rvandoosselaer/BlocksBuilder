@@ -231,6 +231,7 @@ public class BuilderState extends BaseAppState {
 
         Geometry geometry = new Geometry("remove block", new Box(blockSizeExtents.x, blockSizeExtents.y, blockSizeExtents.z));
         geometry.setMaterial(getApplication().getAssetManager().loadMaterial("/Materials/remove-block.j3m"));
+        geometry.setQueueBucket(RenderQueue.Bucket.Translucent);
 
         return geometry;
     }
@@ -280,7 +281,7 @@ public class BuilderState extends BaseAppState {
 
         if (!isAttached && shouldAttach) {
             parentNode.attachChild(removeBlockPlaceholder);
-        } else {
+        } else if (isAttached && !shouldAttach) {
             removeBlockPlaceholder.removeFromParent();
         }
 

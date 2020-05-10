@@ -14,6 +14,7 @@ import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
 import com.simsilica.lemur.Container;
 import com.simsilica.lemur.FillMode;
+import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.HAlignment;
 import com.simsilica.lemur.Label;
 import com.simsilica.lemur.Panel;
@@ -56,6 +57,7 @@ public class BlocksState extends BaseAppState {
     private String filterPlaceholderText = "Filter...";
     private VersionedReference<DocumentModel> filterRef;
     private Label selectedBlockLabel;
+    private Button selectedBlockImage;
     private BuilderState builderState;
     private VersionedReference<Block> selectedBlockRef;
 
@@ -96,6 +98,7 @@ public class BlocksState extends BaseAppState {
         // update the selected block
         if (selectedBlockRef.update()) {
             selectedBlockLabel.setText(selectedBlockRef.get().getName());
+            ((IconComponent) selectedBlockImage.getIcon()).setImageTexture(GuiGlobals.getInstance().loadTexture(getIconPath(selectedBlockRef.get()), false, false));
         }
     }
 
@@ -138,10 +141,13 @@ public class BlocksState extends BaseAppState {
 
         blocksGrid = container.addChild(new ExtendedGridPanel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), 4))));
 
-        Container selectedBlockWrapper = container.addChild(new Container(new BorderLayout(), new ElementId("wrapper")));
-        selectedBlockWrapper.addChild(new Label("Selected block: "), BorderLayout.Position.West);
-        selectedBlockLabel = selectedBlockWrapper.addChild(new Label(selectedBlockRef.get().getName(), new ElementId(Label.ELEMENT_ID).child("value.label")), BorderLayout.Position.Center);
+        container.addChild(new Label("Selected block:", new ElementId("title")));
+        Container selectedBlockWrapper = container.addChild(new Container(new SpringGridLayout(Axis.X, Axis.Y, FillMode.First, FillMode.Even), new ElementId("wrapper")));
+        selectedBlockLabel = selectedBlockWrapper.addChild(new Label(selectedBlockRef.get().getName(), new ElementId(Label.ELEMENT_ID).child("value.label")));
         selectedBlockLabel.setTextHAlignment(HAlignment.Left);
+        selectedBlockImage = selectedBlockWrapper.addChild(new Button(""));
+        selectedBlockImage.setIcon(getBlockIcon(selectedBlockRef.get()));
+        selectedBlockImage.setEnabled(false);
 
         return container;
     }
@@ -166,10 +172,7 @@ public class BlocksState extends BaseAppState {
         int row = 0;
         for (Block block : blocks) {
             Button button = new Button("");
-            IconComponent icon = new IconComponent("/Textures/blocks/" + block.getName().replaceAll("\\s", "_") + ".png");
-            icon.setHAlignment(HAlignment.Center);
-            icon.setVAlignment(VAlignment.Center);
-            icon.setIconSize(new Vector2f(50, 50));
+            IconComponent icon = getBlockIcon(block);
             button.setIcon(icon);
             button.addClickCommands(btn -> onSelectBlock(block));
             grid[row][col++] = button;
@@ -185,6 +188,18 @@ public class BlocksState extends BaseAppState {
 
     private void onSelectBlock(Block block) {
         builderState.setSelectedBlock(block);
+    }
+
+    private IconComponent getBlockIcon(Block block) {
+        IconComponent icon = new IconComponent(getIconPath(block));
+        icon.setHAlignment(HAlignment.Center);
+        icon.setVAlignment(VAlignment.Center);
+        icon.setIconSize(new Vector2f(50, 50));
+        return icon;
+    }
+
+    private String getIconPath(Block block) {
+        return "/Textures/blocks/" + block.getName().replaceAll("\\s", "_") + ".png";
     }
 
     @RequiredArgsConstructor
