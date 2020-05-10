@@ -159,7 +159,11 @@ public class BlocksState extends BaseAppState {
 
     private Collection<Block> getBlocks() {
         BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
+        // only show blocks with the 'left' direction. The left block can be rotated to get the other directions
         return blockRegistry.getAll().stream()
+                .filter(block -> !block.getName().endsWith("right"))
+                .filter(block -> !block.getName().endsWith("back"))
+                .filter(block -> !block.getName().endsWith("front"))
                 .sorted(Comparator.comparing(Block::getName))
                 .collect(Collectors.toList());
     }

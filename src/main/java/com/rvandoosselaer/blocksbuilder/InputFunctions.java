@@ -33,6 +33,7 @@ public class InputFunctions {
     // builder input
     public static final FunctionId F_PLACE_BLOCK = new FunctionId(BUILDER_INPUT_GROUP, "place-block");
     public static final FunctionId F_REMOVE_BLOCK = new FunctionId(BUILDER_INPUT_GROUP, "remove-block");
+    public static final FunctionId F_ROTATE_BLOCK = new FunctionId(BUILDER_INPUT_GROUP, "rotate-block");
 
     public static void initializeDefaultMappings(InputMapper inputMapper) {
         // pitch movement (nose up / down) is done with the mouse Y-axis
@@ -58,6 +59,7 @@ public class InputFunctions {
 
         inputMapper.map(F_PLACE_BLOCK, Button.MOUSE_BUTTON1);
         inputMapper.map(F_REMOVE_BLOCK, Button.MOUSE_BUTTON2);
+        inputMapper.map(F_ROTATE_BLOCK, KeyInput.KEY_SPACE);
 
         log.trace("Initialized input mappings.");
     }
@@ -74,6 +76,7 @@ public class InputFunctions {
 
         inputMapper.getMappings(F_PLACE_BLOCK).forEach(inputMapper::removeMapping);
         inputMapper.getMappings(F_REMOVE_BLOCK).forEach(inputMapper::removeMapping);
+        inputMapper.getMappings(F_ROTATE_BLOCK).forEach(inputMapper::removeMapping);
 
         log.trace("Removed input mappings.");
     }

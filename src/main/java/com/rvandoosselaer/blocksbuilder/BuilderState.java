@@ -48,6 +48,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -104,7 +105,7 @@ public class BuilderState extends BaseAppState {
 
         inputListener = new InputFunctionListener(125);
         inputMapper = GuiGlobals.getInstance().getInputMapper();
-        inputMapper.addStateListener(inputListener, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
+        inputMapper.addStateListener(inputListener, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK, InputFunctions.F_ROTATE_BLOCK);
         inputMapper.addAnalogListener(inputListener, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
 
         if (parentNode == null) {
@@ -117,7 +118,7 @@ public class BuilderState extends BaseAppState {
     protected void cleanup(Application app) {
         builderNode.detachAllChildren();
         builderNode.removeFromParent();
-        inputMapper.removeStateListener(inputListener, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
+        inputMapper.removeStateListener(inputListener, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK, InputFunctions.F_ROTATE_BLOCK);
         inputMapper.removeAnalogListener(inputListener, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
         chunkManager.removeListener(chunkListener);
     }
@@ -295,6 +296,41 @@ public class BuilderState extends BaseAppState {
         chunkManager.removeBlock(removeBlockPlaceholder.getWorldTranslation());
     }
 
+    private void rotateBlock() {
+        if (removeBlockPlaceholder.getParent() == null) {
+            return;
+        }
+
+        Optional<Block> selectedBlock = chunkManager.getBlock(removeBlockPlaceholder.getWorldTranslation());
+        selectedBlock.ifPresent(block -> chunkManager.addBlock(removeBlockPlaceholder.getWorldTranslation(), getRotatedBlock(block)));
+    }
+
+    /**
+     * Returns the 90° clockwise rotated block of this block, or the same block when the rotated block is not found.
+     */
+    private Block getRotatedBlock(Block block) {
+        String rotatedBlockName = null;
+        if (block.getName().endsWith("left")) {
+            rotatedBlockName = block.getName().substring(0, block.getName().length() - 4) + "back";
+        } else if (block.getName().endsWith("back")) {
+            rotatedBlockName = block.getName().substring(0, block.getName().length() - 4) + "right";
+        } else if (block.getName().endsWith("right")) {
+            rotatedBlockName = block.getName().substring(0, block.getName().length() - 5) + "front";
+        } else if (block.getName().endsWith("front")) {
+            rotatedBlockName = block.getName().substring(0, block.getName().length() - 5) + "left";
+        }
+
+        if (rotatedBlockName != null) {
+            BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
+            Block rotatedBlock = blockRegistry.get(rotatedBlockName);
+            if (rotatedBlock != null) {
+                return rotatedBlock;
+            }
+        }
+
+        return block;
+    }
+
     private class ChunkListener implements ChunkManagerListener {
 
         @Override
@@ -352,6 +388,8 @@ public class BuilderState extends BaseAppState {
                 if (!pressed) {
                     lastClickTimestamp = -1;
                 }
+            } else if (Objects.equals(func, InputFunctions.F_ROTATE_BLOCK) && value != InputState.Off) {
+                rotateBlock();
             }
         }
 
