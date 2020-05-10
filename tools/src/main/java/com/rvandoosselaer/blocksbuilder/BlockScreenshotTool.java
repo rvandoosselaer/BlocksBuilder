@@ -1,7 +1,6 @@
 package com.rvandoosselaer.blocksbuilder;
 
 import com.jme3.app.DebugKeysAppState;
-import com.jme3.app.FlyCamAppState;
 import com.jme3.app.SimpleApplication;
 import com.jme3.light.AmbientLight;
 import com.jme3.math.ColorRGBA;
@@ -46,8 +45,7 @@ public class BlockScreenshotTool extends SimpleApplication {
 
     public BlockScreenshotTool() {
         super(new DebugKeysAppState(),
-                new ScreenshotState(Paths.get(System.getProperty("user.dir"), "/assets/Textures/blocks/")),
-                new FlyCamAppState());
+                new ScreenshotState(Paths.get(System.getProperty("user.dir"), "/assets/Textures/blocks/")));
     }
 
     @Override
