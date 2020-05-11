@@ -12,7 +12,9 @@ import com.simsilica.lemur.Action;
 import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
 import com.simsilica.lemur.CallMethodAction;
+import com.simsilica.lemur.Checkbox;
 import com.simsilica.lemur.Container;
+import com.simsilica.lemur.DefaultRangedValueModel;
 import com.simsilica.lemur.EmptyAction;
 import com.simsilica.lemur.FillMode;
 import com.simsilica.lemur.GuiGlobals;
@@ -22,10 +24,13 @@ import com.simsilica.lemur.Label;
 import com.simsilica.lemur.ListBox;
 import com.simsilica.lemur.OptionPanel;
 import com.simsilica.lemur.OptionPanelState;
+import com.simsilica.lemur.Slider;
+import com.simsilica.lemur.TabbedPanel;
 import com.simsilica.lemur.TextField;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.component.TbtQuadBackgroundComponent;
 import com.simsilica.lemur.core.VersionedList;
+import com.simsilica.lemur.core.VersionedReference;
 import com.simsilica.lemur.style.ElementId;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,13 +51,18 @@ public class MenuState extends BaseAppState {
     private CameraState cameraState;
     private BuilderState builderState;
     private OptionPanelState optionPanelState;
+    private CameraPivotPointState cameraPivotPointState;
+    private VersionedReference<Boolean> cameraPivotPointRef;
+    private Label clickIntervalValue;
+    private VersionedReference<Double> clickIntervalRef;
 
     @Override
     protected void initialize(Application app) {
-        menu = layout(createMenu());
         cameraState = getState(CameraState.class);
         builderState = getState(BuilderState.class);
         optionPanelState = getState(OptionPanelState.class);
+        cameraPivotPointState = getState(CameraPivotPointState.class);
+        menu = layout(createMenu());
 
         if (node == null) {
             node = ((SimpleApplication) app).getGuiNode();
@@ -76,6 +86,14 @@ public class MenuState extends BaseAppState {
     @Override
     public void update(float tpf) {
         layout(menu);
+
+        if (cameraPivotPointRef.update()) {
+            cameraPivotPointState.setEnabled(cameraPivotPointRef.get());
+        }
+        if (clickIntervalRef.update()) {
+            builderState.setClickRepeatInterval(clickIntervalRef.get().intValue());
+            clickIntervalValue.setText(String.format("%d", clickIntervalRef.get().intValue()));
+        }
     }
 
     private void onExit() {
@@ -221,26 +239,46 @@ public class MenuState extends BaseAppState {
         Container container = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Even, FillMode.Even));
         ColorRGBA colorRGBA = ((TbtQuadBackgroundComponent) container.getBackground()).getColor();
         colorRGBA.set(colorRGBA.r, colorRGBA.g, colorRGBA.b, 0.9f);
-
         container.addChild(new Label("BlocksBuilder", new ElementId("title")));
 
-        Button newModel = container.addChild(new Button("New"));
+        TabbedPanel tabbedPanel = container.addChild(new TabbedPanel());
+
+        // File
+        Container fileContainer = tabbedPanel.addTab("File", new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Even, FillMode.Even)));
+        Button newModel = fileContainer.addChild(new Button("New"));
         newModel.addClickCommands(button -> onNew());
-
-        Button openModel = container.addChild(new Button("Open"));
+        Button openModel = fileContainer.addChild(new Button("Open"));
         openModel.addClickCommands(button -> onOpen());
-
-        Button saveModel = container.addChild(new Button("Save"));
+        Button saveModel = fileContainer.addChild(new Button("Save"));
         saveModel.addClickCommands(button -> onSave());
-
-        Button saveAsModel = container.addChild(new Button("Save as"));
+        Button saveAsModel = fileContainer.addChild(new Button("Save as"));
         saveAsModel.addClickCommands(button -> onSaveAs());
-
-        Button export = container.addChild(new Button("Export to j3o"));
+        Button export = fileContainer.addChild(new Button("Export to j3o"));
         export.addClickCommands(button -> onExport());
-
-        Button exit = container.addChild(new Button("Exit"));
+        Button exit = fileContainer.addChild(new Button("Exit"));
         exit.addClickCommands(button -> onExit());
+
+        // Settings
+        Container settingsContainer = tabbedPanel.addTab("Settings", new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.ForcedEven, FillMode.Even)));
+        Label cameraPivotPointLabel = new Label("Show camera pivot point:", new ElementId(Label.ELEMENT_ID).child("boolean.label"));
+        cameraPivotPointLabel.setTextHAlignment(HAlignment.Right);
+        Checkbox cameraPivotPointCheckbox = new Checkbox("", new ElementId(Checkbox.ELEMENT_ID).child("boolean.checkbox"), null);
+        getApplication().enqueue(() -> cameraPivotPointCheckbox.setChecked(cameraPivotPointState.isEnabled()));
+        cameraPivotPointRef = cameraPivotPointCheckbox.getModel().createReference();
+        settingsContainer.addChild(cameraPivotPointLabel);
+        settingsContainer.addChild(cameraPivotPointCheckbox, 1);
+
+        Label clickIntervalLabel = new Label("Click repeat speed:", new ElementId(Label.ELEMENT_ID).child("float.label"));
+        clickIntervalLabel.setTextHAlignment(HAlignment.Right);
+        Slider clickIntervalSlider = new Slider( new DefaultRangedValueModel(0, 1000, builderState.getClickRepeatInterval()), Axis.X, new ElementId(Slider.ELEMENT_ID).child("float.slider"), null);
+        clickIntervalSlider.setDelta(50);
+        clickIntervalValue = new Label(String.format("%d", builderState.getClickRepeatInterval()), new ElementId(Label.ELEMENT_ID).child("value.label"));
+        clickIntervalRef = clickIntervalSlider.getModel().createReference();
+        settingsContainer.addChild(clickIntervalLabel);
+        settingsContainer.addChild(clickIntervalValue, 1);
+        settingsContainer.addChild(clickIntervalSlider, 2);
+
+        tabbedPanel.setSelectedTab(tabbedPanel.getTabs().get(0));
 
         return container;
     }

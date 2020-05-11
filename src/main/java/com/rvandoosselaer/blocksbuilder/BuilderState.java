@@ -38,7 +38,6 @@ import com.simsilica.lemur.input.InputState;
 import com.simsilica.lemur.input.StateFunctionListener;
 import com.simsilica.mathd.Vec3i;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -103,7 +102,7 @@ public class BuilderState extends BaseAppState {
         builderNode = new Node("Builder node");
         builderNode.attachChild(grid);
 
-        inputListener = new InputFunctionListener(125);
+        inputListener = new InputFunctionListener();
         inputMapper = GuiGlobals.getInstance().getInputMapper();
         inputMapper.addStateListener(inputListener, InputFunctions.F_DRAG, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK, InputFunctions.F_ROTATE_BLOCK);
         inputMapper.addAnalogListener(inputListener, InputFunctions.F_PLACE_BLOCK, InputFunctions.F_REMOVE_BLOCK);
@@ -171,6 +170,7 @@ public class BuilderState extends BaseAppState {
     public void saveScene(String name) {
         chunkRepository.save(chunk, name);
         sceneInformation.save(name);
+        log.info("Saved {} to {}.", name, chunkRepository.getPath());
     }
 
     public void loadScene(String name) {
@@ -182,6 +182,7 @@ public class BuilderState extends BaseAppState {
             chunkManager.setChunk(loadedChunk);
             chunkManager.requestChunkMeshUpdate(loadedChunk);
             sceneInformation.setFilename(name);
+            log.info("Loaded {} from {}.", name, chunkRepository.getPath());
         }
     }
 
@@ -198,6 +199,14 @@ public class BuilderState extends BaseAppState {
         }
 
         return Collections.emptyList();
+    }
+
+    public int getClickRepeatInterval() {
+        return inputListener.getClickInterval();
+    }
+
+    public void setClickRepeatInterval(int interval) {
+        inputListener.setClickInterval(interval);
     }
 
     private Block getDefaultBlock() {
@@ -349,13 +358,22 @@ public class BuilderState extends BaseAppState {
 
     }
 
-    @RequiredArgsConstructor
     private class InputFunctionListener implements StateFunctionListener, AnalogFunctionListener {
 
         private boolean pressed;
         private long lastClickTimestamp;
         // time between consecutive clicks in milliseconds. set to 0 to disable 'repeat' clicking
-        private final int clickInterval;
+        @Getter
+        @Setter
+        private int clickInterval;
+
+        public InputFunctionListener() {
+            this(125);
+        }
+
+        public InputFunctionListener(int clickInterval) {
+            this.clickInterval = clickInterval;
+        }
 
         @Override
         public void valueActive(FunctionId func, double value, double tpf) {
