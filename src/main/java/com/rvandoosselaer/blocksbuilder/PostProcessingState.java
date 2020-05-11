@@ -56,7 +56,9 @@ public class PostProcessingState extends BaseAppState {
     }
 
     private SSAOFilter createSSAOFilter() {
-        return new SSAOFilter();
+        SSAOFilter ssaoFilter = new SSAOFilter(2.9299974f,32.920483f,5.8100376f,0.091000035f);
+        ssaoFilter.setApproximateNormals(true);
+        return ssaoFilter;
     }
 
     private DirectionalLightShadowFilter createDirectionalLightFilter() {
