@@ -241,7 +241,7 @@ public class BuilderState extends BaseAppState {
 
         Geometry geometry = new Geometry("remove block", new Box(blockSizeExtents.x, blockSizeExtents.y, blockSizeExtents.z));
         geometry.setMaterial(getApplication().getAssetManager().loadMaterial("/Materials/remove-block.j3m"));
-        geometry.setQueueBucket(RenderQueue.Bucket.Translucent);
+        geometry.setQueueBucket(RenderQueue.Bucket.Transparent);
 
         return geometry;
     }
