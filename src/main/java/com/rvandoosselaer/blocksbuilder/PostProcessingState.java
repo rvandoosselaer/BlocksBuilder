@@ -9,6 +9,7 @@ import com.jme3.shadow.DirectionalLightShadowFilter;
 import com.jme3.shadow.EdgeFilteringMode;
 import com.rvandoosselaer.jmeutils.post.FilterPostProcessorState;
 import com.simsilica.fx.LightingState;
+import lombok.Getter;
 
 /**
  * An AppState that handles all post processing effects.
@@ -20,6 +21,7 @@ public class PostProcessingState extends BaseAppState {
     private FilterPostProcessorState fpps;
     private DirectionalLight directionalLight;
     private FXAAFilter fxaaFilter;
+    @Getter
     private SSAOFilter ssaoFilter;
     private DirectionalLightShadowFilter dlsf;
 
@@ -56,7 +58,7 @@ public class PostProcessingState extends BaseAppState {
     }
 
     private SSAOFilter createSSAOFilter() {
-        SSAOFilter ssaoFilter = new SSAOFilter(2.9299974f,32.920483f,5.8100376f,0.091000035f);
+        SSAOFilter ssaoFilter = new SSAOFilter(5f,4.5f,0.5f,0.1f);
         ssaoFilter.setApproximateNormals(true);
         return ssaoFilter;
     }

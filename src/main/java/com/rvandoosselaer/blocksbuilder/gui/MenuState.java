@@ -7,6 +7,7 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Node;
 import com.rvandoosselaer.blocksbuilder.BuilderState;
 import com.rvandoosselaer.blocksbuilder.CameraState;
+import com.rvandoosselaer.blocksbuilder.PostProcessingState;
 import com.rvandoosselaer.jmeutils.gui.GuiUtils;
 import com.simsilica.lemur.Action;
 import com.simsilica.lemur.Axis;
@@ -55,6 +56,7 @@ public class MenuState extends BaseAppState {
     private VersionedReference<Boolean> cameraPivotPointRef;
     private Label clickIntervalValue;
     private VersionedReference<Double> clickIntervalRef;
+    private PostProcessingState postProcessingState;
 
     @Override
     protected void initialize(Application app) {
@@ -62,6 +64,7 @@ public class MenuState extends BaseAppState {
         builderState = getState(BuilderState.class);
         optionPanelState = getState(OptionPanelState.class);
         cameraPivotPointState = getState(CameraPivotPointState.class);
+        postProcessingState = getState(PostProcessingState.class);
         menu = layout(createMenu());
 
         if (node == null) {
@@ -277,6 +280,13 @@ public class MenuState extends BaseAppState {
         settingsContainer.addChild(clickIntervalLabel);
         settingsContainer.addChild(clickIntervalValue, 1);
         settingsContainer.addChild(clickIntervalSlider, 2);
+
+//        PropertyPanel propertyPanel = new PropertyPanel(null);
+//        propertyPanel.addFloatProperty("Sample radius", postProcessingState.getSsaoFilter(), "sampleRadius", 0, 20, 0.1f);
+//        propertyPanel.addFloatProperty("Intensity", postProcessingState.getSsaoFilter(), "intensity", 0, 50, 0.1f);
+//        propertyPanel.addFloatProperty("Scale", postProcessingState.getSsaoFilter(), "scale", 0, 20, 0.1f);
+//        propertyPanel.addFloatProperty("Bias", postProcessingState.getSsaoFilter(), "bias", 0, 20, 0.1f);
+//        settingsContainer.addChild(propertyPanel);
 
         tabbedPanel.setSelectedTab(tabbedPanel.getTabs().get(0));
 
