@@ -1,7 +1,7 @@
 # BlocksBuilder
 BlocksBuilder is a basic model editor for [Blocks](https://github.com/rvandoosselaer/Blocks).
 
-![](https://i.imgur.com/gBgoEyq.png)
+![](https://i.imgur.com/C9rDwgn.png)
 
 ## Controls
 | Function | Input | Alternate input |
