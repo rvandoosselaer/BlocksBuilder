@@ -14,6 +14,7 @@ import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
 import com.simsilica.lemur.Container;
 import com.simsilica.lemur.FillMode;
+import com.simsilica.lemur.GridPanel;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.HAlignment;
 import com.simsilica.lemur.Label;
@@ -28,6 +29,7 @@ import com.simsilica.lemur.core.VersionedReference;
 import com.simsilica.lemur.focus.FocusChangeEvent;
 import com.simsilica.lemur.focus.FocusChangeListener;
 import com.simsilica.lemur.grid.ArrayGridModel;
+import com.simsilica.lemur.grid.GridModel;
 import com.simsilica.lemur.style.ElementId;
 import com.simsilica.lemur.text.DocumentModel;
 import lombok.Getter;
@@ -39,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +63,7 @@ public class BlocksState extends BaseAppState {
     private Button selectedBlockImage;
     private BuilderState builderState;
     private VersionedReference<Block> selectedBlockRef;
+    private GridPanel recentlyUsedBlocksGrid;
 
     @Override
     protected void initialize(Application app) {
@@ -149,6 +153,10 @@ public class BlocksState extends BaseAppState {
         selectedBlockImage.setIcon(getBlockIcon(selectedBlockRef.get()));
         selectedBlockImage.setEnabled(false);
 
+        container.addChild(new Label("Recently used blocks:", new ElementId("title")));
+        recentlyUsedBlocksGrid = container.addChild(new GridPanel(new ArrayGridModel<>(new Panel[1][4])));
+        recentlyUsedBlocksGrid.setVisibleSize(1, 4);
+
         return container;
     }
 
@@ -175,10 +183,7 @@ public class BlocksState extends BaseAppState {
         int col = 0;
         int row = 0;
         for (Block block : blocks) {
-            Button button = new Button("");
-            IconComponent icon = getBlockIcon(block);
-            button.setIcon(icon);
-            button.addClickCommands(btn -> onSelectBlock(block));
+            Button button = getBlockButton(block);
             grid[row][col++] = button;
 
             if (col >= cols) {
@@ -192,6 +197,54 @@ public class BlocksState extends BaseAppState {
 
     private void onSelectBlock(Block block) {
         builderState.setSelectedBlock(block);
+
+        // update the recently used block list
+        GridModel<Panel> model = recentlyUsedBlocksGrid.getModel();
+        Panel firstItem = model.getCell(0, 0, null);
+        if (firstItem == null) {
+            // no previous block, set the block as first and fill the list with empty spots
+            model.setCell(0, 0, getBlockButton(block));
+            for (int col = 1; col < model.getColumnCount(); col++) {
+                Button dummyButton = new Button("");
+                dummyButton.setEnabled(false);
+                model.setCell(0, col, dummyButton);
+            }
+            return;
+        }
+
+        // create a list from the array, it's easier to pop and move items this way.
+        List<Panel> blocks = new ArrayList<>();
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            blocks.add(model.getCell(0, col, null));
+        }
+
+        // check if the block is already in the list
+        Optional<Panel> optionalBlock = blocks.stream()
+                .filter(b -> block.getName().equals(b.getUserData("id")))
+                .findFirst();
+
+        if (optionalBlock.isPresent()) {
+            // block is already in the list, move it to the first position
+            blocks.remove(optionalBlock.get());
+            blocks.add(0, optionalBlock.get());
+        } else {
+            blocks.add(0, getBlockButton(block));
+        }
+
+        // recreate the grid from the list
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            model.setCell(0, col, blocks.get(col));
+        }
+    }
+
+    private Button getBlockButton(Block block) {
+        Button button = new Button("");
+        IconComponent icon = getBlockIcon(block);
+        button.setIcon(icon);
+        button.addClickCommands(btn -> onSelectBlock(block));
+        button.setUserData("id", block.getName());
+
+        return button;
     }
 
     private IconComponent getBlockIcon(Block block) {
