@@ -78,6 +78,8 @@ public class Main extends SimpleApplication {
 
         int anisotropicFilter = renderer.getLimits().getOrDefault(Limits.TextureAnisotropy, 1);
         renderer.setDefaultAnisotropicFilter(anisotropicFilter);
+
+        viewPort.addProcessor(new ResizeProcessor(45, 0.1f, 1000f));
     }
 
     @Override
