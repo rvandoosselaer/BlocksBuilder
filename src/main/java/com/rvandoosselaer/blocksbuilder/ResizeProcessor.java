@@ -38,8 +38,8 @@ public class ResizeProcessor implements SceneProcessor {
 
     @Override
     public void initialize(RenderManager rm, ViewPort vp) {
-        this.initialized = true;
         reshape(vp, vp.getCamera().getWidth(), vp.getCamera().getHeight());
+        this.initialized = true;
     }
 
     @Override
@@ -68,6 +68,7 @@ public class ResizeProcessor implements SceneProcessor {
 
     @Override
     public void cleanup() {
+        this.initialized = false;
     }
 
     @Override
