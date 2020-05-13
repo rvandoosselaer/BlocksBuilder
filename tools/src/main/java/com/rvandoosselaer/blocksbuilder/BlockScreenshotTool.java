@@ -91,7 +91,9 @@ public class BlockScreenshotTool extends SimpleApplication {
         node.move(-0.5f, -0.5f, -0.5f);
 
         screenshotState.setFilename(blockName);
-        screenshotState.takeScreenshot();
+        //if (block.getName().equals(BlockIds.GRASS_ROUNDED)) {
+            screenshotState.takeScreenshot();
+        //}
 
         if (index >= blocks.size()) {
             stop();
@@ -101,6 +103,7 @@ public class BlockScreenshotTool extends SimpleApplication {
     private static AppSettings createAppSettings() {
         AppSettings settings = new AppSettings(true);
         settings.setResolution(64, 64);
+        //settings.setResolution(256, 256);
         return settings;
     }
 

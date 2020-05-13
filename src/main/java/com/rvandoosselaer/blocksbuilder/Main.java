@@ -13,6 +13,7 @@ import com.rvandoosselaer.blocksbuilder.gui.BlocksState;
 import com.rvandoosselaer.blocksbuilder.gui.CameraPivotPointState;
 import com.rvandoosselaer.blocksbuilder.gui.CoordinateAxesState;
 import com.rvandoosselaer.blocksbuilder.gui.MenuState;
+import com.rvandoosselaer.blocksbuilder.gui.SplashScreenState;
 import com.rvandoosselaer.jmeutils.ApplicationGlobals;
 import com.rvandoosselaer.jmeutils.ApplicationSettingsFactory;
 import com.rvandoosselaer.jmeutils.ViewPortState;
@@ -25,6 +26,8 @@ import com.simsilica.lemur.OptionPanelState;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.style.BaseStyles;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author: rvandoosselaer
@@ -41,6 +44,7 @@ public class Main extends SimpleApplication {
 
     public Main() {
         super(new FilterPostProcessorState(),
+                new SplashScreenState(),
                 new LightingState(),
                 new PostProcessingState(),
                 new OptionPanelState(),
@@ -51,9 +55,7 @@ public class Main extends SimpleApplication {
                 new CameraPivotPointState(),
                 new CoordinateAxesState(),
                 new SkyState(new ColorRGBA(0.34901962f, 0.5019608f, 0.28235295f, 1.0f), true),
-                new BuilderState(),
-                new MenuState(),
-                new BlocksState()
+                new BuilderState()
         );
 
         setSettings(createSettings());
@@ -65,8 +67,6 @@ public class Main extends SimpleApplication {
         GuiGlobals.initialize(this);
         ApplicationGlobals.initialize(this);
         BlocksConfig.initialize(assetManager);
-
-        loadGUIStyle();
 
         removeDefaultKeyMappings();
 
@@ -80,6 +80,8 @@ public class Main extends SimpleApplication {
         renderer.setDefaultAnisotropicFilter(anisotropicFilter);
 
         viewPort.addProcessor(new ResizeProcessor(45, 0.1f, 1000f));
+
+        CompletableFuture.runAsync(new BootstrapTask()).thenRun(this::onBootstrapCompleted);
     }
 
     @Override
@@ -92,11 +94,6 @@ public class Main extends SimpleApplication {
         settings.setTitle(String.format("BlocksBuilder - v%s", VersionHelper.getVersion()));
 
         return settings;
-    }
-
-    private void loadGUIStyle() {
-        BaseStyles.loadGlassStyle();
-        GuiGlobals.getInstance().getStyles().setDefaultStyle(BaseStyles.GLASS);
     }
 
     private void removeDefaultKeyMappings() {
@@ -124,6 +121,24 @@ public class Main extends SimpleApplication {
     private void loadKeyMappings() {
         InputMapper inputMapper = GuiGlobals.getInstance().getInputMapper();
         InputFunctions.initializeDefaultMappings(inputMapper);
+    }
+
+    private void onBootstrapCompleted() {
+        stateManager.attachAll(new MenuState(), new BlocksState());
+        stateManager.detach(stateManager.getState(SplashScreenState.class));
+    }
+
+    private static class BootstrapTask implements Runnable {
+
+        @Override
+        public void run() {
+            log.trace("Bootstrapping...");
+            // Load and set lemur style
+            BaseStyles.loadGlassStyle();
+            GuiGlobals.getInstance().getStyles().setDefaultStyle(BaseStyles.GLASS);
+            log.trace("Bootstrapping done.");
+        }
+
     }
 
 }
