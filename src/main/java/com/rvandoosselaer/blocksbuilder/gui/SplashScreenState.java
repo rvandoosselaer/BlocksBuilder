@@ -26,6 +26,7 @@ public class SplashScreenState extends BaseAppState {
     private Node node;
     private Tween fadeOutTween;
     private AnimationState animationState;
+    private float tweenDuration = 0.5f;
 
     @Override
     protected void initialize(Application app) {
@@ -38,6 +39,7 @@ public class SplashScreenState extends BaseAppState {
         background = new Panel(width, height, bgColor);
         background.setLocalTranslation(0, height, 99);
 
+        // create and center logo
         Texture logoImg = GuiGlobals.getInstance().loadTexture("/Textures/logo.png", false, false);
         logo = new Panel(logoImg.getImage().getWidth(), logoImg.getImage().getHeight());
         logo.setBackground(new QuadBackgroundComponent(logoImg));
@@ -45,8 +47,8 @@ public class SplashScreenState extends BaseAppState {
 
         // create a tween that fades the panels and detaches them at the end.
         fadeOutTween = Tweens.parallel(
-                Tweens.sequence(PanelTweens.fade(background, 1f, 0.0f, 0.5f), SpatialTweens.detach(background)),
-                Tweens.sequence(PanelTweens.fade(logo, 1f, 0.0f, 0.5f), SpatialTweens.detach(logo))
+                Tweens.sequence(PanelTweens.fade(background, 1f, 0.0f, tweenDuration), SpatialTweens.detach(background)),
+                Tweens.sequence(PanelTweens.fade(logo, 1f, 0.0f, tweenDuration), SpatialTweens.detach(logo))
         );
 
         if (node == null) {
