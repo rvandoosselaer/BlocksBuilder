@@ -201,12 +201,12 @@ public class BuilderState extends BaseAppState {
         return Collections.emptyList();
     }
 
-    public int getClickRepeatInterval() {
-        return inputListener.getClickInterval();
+    public int getClickRepeatRate() {
+        return inputListener.getClickRepeatRate();
     }
 
-    public void setClickRepeatInterval(int interval) {
-        inputListener.setClickInterval(interval);
+    public void setClickRepeatRate(int interval) {
+        inputListener.setClickRepeatRate(interval);
     }
 
     private Block getDefaultBlock() {
@@ -365,14 +365,14 @@ public class BuilderState extends BaseAppState {
         // time between consecutive clicks in milliseconds. set to 0 to disable 'repeat' clicking
         @Getter
         @Setter
-        private int clickInterval;
+        private int clickRepeatRate;
 
         public InputFunctionListener() {
             this(125);
         }
 
-        public InputFunctionListener(int clickInterval) {
-            this.clickInterval = clickInterval;
+        public InputFunctionListener(int clickRepeatRate) {
+            this.clickRepeatRate = clickRepeatRate;
         }
 
         @Override
@@ -380,8 +380,8 @@ public class BuilderState extends BaseAppState {
             if (pressed) {
                 long currentTimestamp = System.currentTimeMillis();
                 // only click x times / second
-                boolean shouldClick = lastClickTimestamp + clickInterval <= currentTimestamp;
-                if (clickInterval <= 0) {
+                boolean shouldClick = lastClickTimestamp + clickRepeatRate <= currentTimestamp;
+                if (clickRepeatRate <= 0) {
                     // repeat clicking is disabled, only click when there was not a previous click
                     shouldClick = lastClickTimestamp <= 0;
                 }

@@ -20,9 +20,11 @@ public class PostProcessingState extends BaseAppState {
 
     private FilterPostProcessorState fpps;
     private DirectionalLight directionalLight;
+    @Getter
     private FXAAFilter fxaaFilter;
     @Getter
     private SSAOFilter ssaoFilter;
+    @Getter
     private DirectionalLightShadowFilter dlsf;
 
     @Override

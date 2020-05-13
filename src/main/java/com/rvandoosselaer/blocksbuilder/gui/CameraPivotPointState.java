@@ -29,6 +29,7 @@ public class CameraPivotPointState extends BaseAppState {
         pivotPoint = createPivotPoint();
         cameraState = getState(CameraState.class);
         ViewPortState viewPortState = getStateManager().getState("camera-pivot-point", ViewPortState.class);
+        viewPortState.getViewPort().setClearFlags(false, true, false);
         node = viewPortState.getNode();
         pivotPointCamera = viewPortState.getCamera();
     }

@@ -4,6 +4,7 @@ import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;
 import com.jme3.math.ColorRGBA;
+import com.jme3.renderer.Limits;
 import com.jme3.scene.Node;
 import com.rvandoosselaer.blocksbuilder.BuilderState;
 import com.rvandoosselaer.blocksbuilder.CameraState;
@@ -57,6 +58,11 @@ public class MenuState extends BaseAppState {
     private Label clickIntervalValue;
     private VersionedReference<Double> clickIntervalRef;
     private PostProcessingState postProcessingState;
+    private Label anisotropicFilterValue;
+    private VersionedReference<Double> anisotropicFilterRef;
+    private VersionedReference<Boolean> fxaaRef;
+    private VersionedReference<Boolean> ssaoRef;
+    private VersionedReference<Boolean> shadowsRef;
 
     @Override
     protected void initialize(Application app) {
@@ -94,8 +100,21 @@ public class MenuState extends BaseAppState {
             cameraPivotPointState.setEnabled(cameraPivotPointRef.get());
         }
         if (clickIntervalRef.update()) {
-            builderState.setClickRepeatInterval(clickIntervalRef.get().intValue());
+            builderState.setClickRepeatRate(clickIntervalRef.get().intValue());
             clickIntervalValue.setText(String.format("%d", clickIntervalRef.get().intValue()));
+        }
+        if (anisotropicFilterRef.update()) {
+            getApplication().getRenderer().setDefaultAnisotropicFilter(anisotropicFilterRef.get().intValue());
+            anisotropicFilterValue.setText(String.format("%d", anisotropicFilterRef.get().intValue()));
+        }
+        if (fxaaRef.update()) {
+            postProcessingState.getFxaaFilter().setEnabled(fxaaRef.get());
+        }
+        if (ssaoRef.update()) {
+            postProcessingState.getSsaoFilter().setEnabled(ssaoRef.get());
+        }
+        if (shadowsRef.update()) {
+            postProcessingState.getDlsf().setEnabled(shadowsRef.get());
         }
     }
 
@@ -263,23 +282,51 @@ public class MenuState extends BaseAppState {
 
         // Settings
         Container settingsContainer = tabbedPanel.addTab("Settings", new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.ForcedEven, FillMode.Even)));
-        Label cameraPivotPointLabel = new Label("Show camera pivot point:", new ElementId(Label.ELEMENT_ID).child("boolean.label"));
-        cameraPivotPointLabel.setTextHAlignment(HAlignment.Right);
+        Label cameraPivotPointLabel = createLabel("Camera center:", "boolean.label");
         Checkbox cameraPivotPointCheckbox = new Checkbox("", new ElementId(Checkbox.ELEMENT_ID).child("boolean.checkbox"), null);
         getApplication().enqueue(() -> cameraPivotPointCheckbox.setChecked(cameraPivotPointState.isEnabled()));
         cameraPivotPointRef = cameraPivotPointCheckbox.getModel().createReference();
         settingsContainer.addChild(cameraPivotPointLabel);
         settingsContainer.addChild(cameraPivotPointCheckbox, 1);
 
-        Label clickIntervalLabel = new Label("Click repeat speed:", new ElementId(Label.ELEMENT_ID).child("float.label"));
-        clickIntervalLabel.setTextHAlignment(HAlignment.Right);
-        Slider clickIntervalSlider = new Slider( new DefaultRangedValueModel(0, 1000, builderState.getClickRepeatInterval()), Axis.X, new ElementId(Slider.ELEMENT_ID).child("float.slider"), null);
-        clickIntervalSlider.setDelta(50);
-        clickIntervalValue = new Label(String.format("%d", builderState.getClickRepeatInterval()), new ElementId(Label.ELEMENT_ID).child("value.label"));
+        Label clickIntervalLabel = createLabel("Click repeat rate:", "float.label");
+        Slider clickIntervalSlider = createSlider(builderState.getClickRepeatRate(), 0, 1000, 50);
+        clickIntervalValue = new Label(String.format("%d", builderState.getClickRepeatRate()), new ElementId(Label.ELEMENT_ID).child("value.label"));
         clickIntervalRef = clickIntervalSlider.getModel().createReference();
         settingsContainer.addChild(clickIntervalLabel);
         settingsContainer.addChild(clickIntervalValue, 1);
         settingsContainer.addChild(clickIntervalSlider, 2);
+
+        Label anisotropicFilterLabel = createLabel("Anisotropic filter:", "int.label");
+        int maxAnisotropicFilter = getApplication().getRenderer().getLimits().getOrDefault(Limits.TextureAnisotropy, 1);
+        int anisotropicFilter = getApplication().getRenderer().getDefaultAnisotropicFilter();
+        Slider anisotropicFilterSlider = createSlider(anisotropicFilter, 1, maxAnisotropicFilter, 1);
+        anisotropicFilterValue = new Label(String.format("%d", anisotropicFilter), new ElementId(Label.ELEMENT_ID).child("value.label"));
+        anisotropicFilterRef = anisotropicFilterSlider.getModel().createReference();
+        settingsContainer.addChild(anisotropicFilterLabel);
+        settingsContainer.addChild(anisotropicFilterValue, 1);
+        settingsContainer.addChild(anisotropicFilterSlider, 2);
+
+        Label fxaaLabel = createLabel("FXAA:", "boolean.label");
+        Checkbox fxaaCheckbox = new Checkbox("", new ElementId(Checkbox.ELEMENT_ID).child("boolean.checkbox"), null);
+        getApplication().enqueue(() -> fxaaCheckbox.setChecked(postProcessingState.getFxaaFilter().isEnabled()));
+        fxaaRef = fxaaCheckbox.getModel().createReference();
+        settingsContainer.addChild(fxaaLabel);
+        settingsContainer.addChild(fxaaCheckbox, 1);
+
+        Label ssaoLabel = createLabel("SSAO:", "boolean.label");
+        Checkbox ssaoCheckbox = new Checkbox("", new ElementId(Checkbox.ELEMENT_ID).child("boolean.checkbox"), null);
+        getApplication().enqueue(() -> ssaoCheckbox.setChecked(postProcessingState.getSsaoFilter().isEnabled()));
+        ssaoRef = ssaoCheckbox.getModel().createReference();
+        settingsContainer.addChild(ssaoLabel);
+        settingsContainer.addChild(ssaoCheckbox, 1);
+
+        Label shadowsLabel = createLabel("Shadows:", "boolean.label");
+        Checkbox shadowsCheckbox = new Checkbox("", new ElementId(Checkbox.ELEMENT_ID).child("boolean.checkbox"), null);
+        getApplication().enqueue(() -> shadowsCheckbox.setChecked(postProcessingState.getDlsf().isEnabled()));
+        shadowsRef = shadowsCheckbox.getModel().createReference();
+        settingsContainer.addChild(shadowsLabel);
+        settingsContainer.addChild(shadowsCheckbox, 1);
 
 //        PropertyPanel propertyPanel = new PropertyPanel(null);
 //        propertyPanel.addFloatProperty("Sample radius", postProcessingState.getSsaoFilter(), "sampleRadius", 0, 20, 0.1f);
@@ -293,4 +340,16 @@ public class MenuState extends BaseAppState {
         return container;
     }
 
+    private static Label createLabel(String text, String elementId) {
+        Label label = new Label(text, new ElementId(Label.ELEMENT_ID).child(elementId));
+        label.setTextHAlignment(HAlignment.Right);
+        return label;
+    }
+
+    private static Slider createSlider(double value, double min, double max, double delta) {
+        Slider slider = new Slider(new DefaultRangedValueModel(min, max, value), new ElementId(Slider.ELEMENT_ID).child("float.slider"));
+        slider.setDelta(delta);
+
+        return slider;
+    }
 }
