@@ -6,6 +6,7 @@ import com.jme3.app.state.BaseAppState;
 import com.jme3.asset.AssetManager;
 import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
+import com.jme3.export.binary.BinaryExporter;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
@@ -15,6 +16,7 @@ import com.jme3.math.Vector3f;
 import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 import com.jme3.scene.debug.WireBox;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Quad;
@@ -43,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -183,6 +186,20 @@ public class BuilderState extends BaseAppState {
             chunkManager.requestChunkMeshUpdate(loadedChunk);
             sceneInformation.setFilename(name);
             log.info("Loaded {} from {}.", name, chunkRepository.getPath());
+        }
+    }
+
+    public void export(String name) {
+        Spatial toExport = chunkNode.clone();
+        Vector3f chunkSize = BlocksConfig.getInstance().getChunkSize().toVector3f();
+        toExport.setLocalTranslation(chunkSize.x * -0.5f, 0, chunkSize.z * -0.5f);
+
+        Path path = chunkRepository.getPath().resolve(name + ".j3o");
+        try {
+            BinaryExporter.getInstance().save(toExport, path.toFile());
+            log.info("Exported {} to {}.", name, path);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
         }
     }
 

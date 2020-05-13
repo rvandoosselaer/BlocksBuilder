@@ -123,7 +123,18 @@ public class MenuState extends BaseAppState {
     }
 
     private void onExport() {
+        boolean isSavedBefore = builderState.getSceneInformation().getFilename() != null;
+        if (isSavedBefore) {
+            builderState.export(builderState.getSceneInformation().getFilename());
+        } else {
+            OptionPanel optionPanel = new OptionPanel("Export",
+                    "The scene should be saved before exporting.", null,
+                    new EmptyAction("Ok"));
+            ColorRGBA colorRGBA = ((TbtQuadBackgroundComponent) optionPanel.getBackground()).getColor();
+            colorRGBA.set(colorRGBA.r, colorRGBA.g, colorRGBA.b, 0.9f);
 
+            optionPanelState.show(optionPanel);
+        }
     }
 
     private void onSaveAs() {
