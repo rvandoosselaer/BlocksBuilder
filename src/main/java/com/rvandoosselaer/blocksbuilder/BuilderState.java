@@ -196,7 +196,7 @@ public class BuilderState extends BaseAppState {
 
         Path path = chunkRepository.getPath().resolve(name + ".j3o");
         try {
-            BinaryExporter.getInstance().save(toExport, path.toFile());
+            BinaryExporter.getInstance().save(toExport, Files.newOutputStream(path));
             log.info("Exported {} to {}.", name, path);
         } catch (IOException e) {
             log.error(e.getMessage(), e);
