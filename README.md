@@ -1,4 +1,4 @@
-# BlocksBuilder
+# ![](icon-64.png) BlocksBuilder
 BlocksBuilder is a basic model editor for [Blocks](https://github.com/rvandoosselaer/Blocks).
 
 ![](https://i.imgur.com/C9rDwgn.png)
