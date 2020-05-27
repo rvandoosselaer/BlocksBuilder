@@ -26,7 +26,7 @@ ext {
 repositories {
     jcenter()
     maven {
-        url  'https://dl.bintray.com/remyvd/rvandoosselaer'
+        url 'https://dl.bintray.com/remyvd/rvandoosselaer'
     }
     mavenLocal()
 }
@@ -114,9 +114,11 @@ task copyDistFiles(type: Copy) {
     from file("$projectDir/src/main/resources/application.properties") into file("$projectDir/src/dist/conf")
 }
 
-task cleanTextures() {
-    delete "$projectDir/assets/Textures/blocks/"
-    mkdir "$projectDir/assets/Textures/blocks/"
+task cleanTextures {
+    doLast {
+        delete "$projectDir/assets/Textures/blocks/"
+        mkdir "$projectDir/assets/Textures/blocks/"
+    }
 }
 
 clean {
