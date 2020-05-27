@@ -6,8 +6,11 @@ import com.jme3.app.state.BaseAppState;
 import com.jme3.math.Vector2f;
 import com.jme3.scene.Node;
 import com.rvandoosselaer.blocks.Block;
+import com.rvandoosselaer.blocks.BlockIds;
 import com.rvandoosselaer.blocks.BlockRegistry;
 import com.rvandoosselaer.blocks.BlocksConfig;
+import com.rvandoosselaer.blocks.TypeIds;
+import com.rvandoosselaer.blocksbuilder.BuilderBlock;
 import com.rvandoosselaer.blocksbuilder.BuilderState;
 import com.rvandoosselaer.jmeutils.gui.GuiUtils;
 import com.simsilica.lemur.Axis;
@@ -52,6 +55,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BlocksState extends BaseAppState {
 
+    private static final int COLS = 4;
     @Getter
     @Setter
     private Node node;
@@ -62,13 +66,16 @@ public class BlocksState extends BaseAppState {
     private Label selectedBlockLabel;
     private Button selectedBlockImage;
     private BuilderState builderState;
-    private VersionedReference<Block> selectedBlockRef;
+    private VersionedReference<BuilderBlock> selectedBlockRef;
     private GridPanel recentlyUsedBlocksGrid;
+    private List<BuilderBlock> blocks;
 
     @Override
     protected void initialize(Application app) {
         builderState = getState(BuilderState.class);
+        // set the default block
         selectedBlockRef = builderState.getSelectedBlock().createReference();
+        builderState.setSelectedBlock(getDefaultBlock());
         blocksContainer = layout(createBlocksContainer());
 
         if (node == null) {
@@ -102,8 +109,19 @@ public class BlocksState extends BaseAppState {
         // update the selected block
         if (selectedBlockRef.update()) {
             selectedBlockLabel.setText(selectedBlockRef.get().getName());
-            ((IconComponent) selectedBlockImage.getIcon()).setImageTexture(GuiGlobals.getInstance().loadTexture(getIconPath(selectedBlockRef.get()), false, false));
+            ((IconComponent) selectedBlockImage.getIcon()).setImageTexture(GuiGlobals.getInstance().loadTexture(getIconPath(selectedBlockRef.get().getBlock()), false, false));
         }
+    }
+
+    public Optional<Block> getRotatedBlock(Block block) {
+        for (BuilderBlock builderBlock : getBlocks()) {
+            Optional<Block> nextBlock = builderBlock.getNextBlock(block);
+            if (nextBlock.isPresent()) {
+                return nextBlock;
+            }
+        }
+
+        return Optional.empty();
     }
 
     private Container layout(Container container) {
@@ -121,14 +139,14 @@ public class BlocksState extends BaseAppState {
         String[] split = text.split("\\s+");
 
         // filter out the blocks that don't match per word.
-        List<Block> filteredBlocks = new ArrayList<>(getBlocks());
+        List<BuilderBlock> filteredBlocks = new ArrayList<>(getBlocks());
         for (String s : split) {
             filteredBlocks.removeAll(getBlocks().stream()
                     .filter(block -> !block.getName().contains(s))
                     .collect(Collectors.toList()));
         }
 
-        blocksGrid.setModel(new ArrayGridModel<>(createBlocksGridArray(filteredBlocks, 4)));
+        blocksGrid.setModel(new ArrayGridModel<>(createBlocksGridArray(filteredBlocks, COLS)));
     }
 
     private Container createBlocksContainer() {
@@ -143,14 +161,14 @@ public class BlocksState extends BaseAppState {
         Button clearFilter = filterWrapper.addChild(new Button("Clear"), BorderLayout.Position.East);
         clearFilter.addClickCommands(source -> clearFilter(filter));
 
-        blocksGrid = container.addChild(new ExtendedGridPanel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), 4))));
+        blocksGrid = container.addChild(new ExtendedGridPanel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), COLS))));
 
         container.addChild(new Label("Selected block:", new ElementId("title")));
         Container selectedBlockWrapper = container.addChild(new Container(new SpringGridLayout(Axis.X, Axis.Y, FillMode.First, FillMode.Even), new ElementId("wrapper")));
         selectedBlockLabel = selectedBlockWrapper.addChild(new Label(selectedBlockRef.get().getName(), new ElementId(Label.ELEMENT_ID).child("value.label")));
         selectedBlockLabel.setTextHAlignment(HAlignment.Left);
         selectedBlockImage = selectedBlockWrapper.addChild(new Button(""));
-        selectedBlockImage.setIcon(getBlockIcon(selectedBlockRef.get()));
+        selectedBlockImage.setIcon(getBlockIcon(selectedBlockRef.get().getBlock()));
         selectedBlockImage.setEnabled(false);
 
         container.addChild(new Label("Recently used blocks:", new ElementId("title")));
@@ -162,28 +180,54 @@ public class BlocksState extends BaseAppState {
 
     private void clearFilter(TextField filter) {
         filter.setText(filterPlaceholderText);
-        blocksGrid.setModel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), 4)));
+        blocksGrid.setModel(new ArrayGridModel<>(createBlocksGridArray(getBlocks(), COLS)));
     }
 
-    private Collection<Block> getBlocks() {
-        BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
-        // only show blocks with the 'left' direction. The left block can be rotated to get the other directions
-        return blockRegistry.getAll().stream()
-                .filter(block -> !block.getName().endsWith("right"))
-                .filter(block -> !block.getName().endsWith("back"))
-                .filter(block -> !block.getName().endsWith("front"))
-                .sorted(Comparator.comparing(Block::getName))
-                .collect(Collectors.toList());
+    private BuilderBlock getDefaultBlock() {
+        for (BuilderBlock builderBlock : getBlocks()) {
+            if (builderBlock.getName().equals(BlockIds.getName(TypeIds.GRASS, "cube"))) {
+                return builderBlock;
+            }
+        }
+        return null;
     }
 
-    private Panel[][] createBlocksGridArray(Collection<Block> blocks, int cols) {
+    private List<BuilderBlock> getBlocks() {
+        if (blocks == null) {
+            blocks = new ArrayList<>();
+
+            BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
+            for (Block block : blockRegistry.getAll()) {
+                String genericShape = block.getShape();
+                int underscoreIndex = genericShape.lastIndexOf("_");
+                if (underscoreIndex > 0) {
+                    genericShape = genericShape.substring(0, underscoreIndex);
+                }
+                String name = block.getType() + "-" + genericShape;
+
+                // find the matching BuilderBlock
+                BuilderBlock builderBlock = blocks.stream().filter(b -> name.equals(b.getName())).findFirst().orElse(new BuilderBlock(name));
+                if (builderBlock.getBlock() == null) {
+                    // no previous builder block was found
+                    blocks.add(builderBlock);
+                }
+                builderBlock.addBlock(block);
+            }
+
+            blocks.sort(Comparator.comparing(BuilderBlock::getName));
+        }
+
+        return blocks;
+    }
+
+    private Panel[][] createBlocksGridArray(Collection<BuilderBlock> blocks, int cols) {
         int rows = (int) Math.ceil((double) blocks.size() / cols);
         Panel[][] grid = new Panel[rows][cols];
 
         int col = 0;
         int row = 0;
-        for (Block block : blocks) {
-            Button button = getBlockButton(block);
+        for (BuilderBlock builderBlock : blocks) {
+            Button button = getBlockButton(builderBlock);
             grid[row][col++] = button;
 
             if (col >= cols) {
@@ -195,15 +239,17 @@ public class BlocksState extends BaseAppState {
         return grid;
     }
 
-    private void onSelectBlock(Block block) {
-        builderState.setSelectedBlock(block);
+    private void onSelectBlock(BuilderBlock builderBlock) {
+        builderState.setSelectedBlock(builderBlock);
+        // reset the builder block to use the default shape again
+        builderBlock.reset();
 
         // update the recently used block list
         GridModel<Panel> model = recentlyUsedBlocksGrid.getModel();
         Panel firstItem = model.getCell(0, 0, null);
         if (firstItem == null) {
             // no previous block, set the block as first and fill the list with empty spots
-            model.setCell(0, 0, getBlockButton(block));
+            model.setCell(0, 0, getBlockButton(builderBlock));
             for (int col = 1; col < model.getColumnCount(); col++) {
                 Button dummyButton = new Button("");
                 dummyButton.setEnabled(false);
@@ -220,7 +266,7 @@ public class BlocksState extends BaseAppState {
 
         // check if the block is already in the list
         Optional<Panel> optionalBlock = blocks.stream()
-                .filter(b -> block.getName().equals(b.getUserData("id")))
+                .filter(b -> builderBlock.getName().equals(b.getUserData("id")))
                 .findFirst();
 
         if (optionalBlock.isPresent()) {
@@ -228,7 +274,7 @@ public class BlocksState extends BaseAppState {
             blocks.remove(optionalBlock.get());
             blocks.add(0, optionalBlock.get());
         } else {
-            blocks.add(0, getBlockButton(block));
+            blocks.add(0, getBlockButton(builderBlock));
         }
 
         // recreate the grid from the list
@@ -237,12 +283,12 @@ public class BlocksState extends BaseAppState {
         }
     }
 
-    private Button getBlockButton(Block block) {
+    private Button getBlockButton(BuilderBlock builderBlock) {
         Button button = new Button("");
-        IconComponent icon = getBlockIcon(block);
+        IconComponent icon = getBlockIcon(builderBlock.getBlock());
         button.setIcon(icon);
-        button.addClickCommands(btn -> onSelectBlock(block));
-        button.setUserData("id", block.getName());
+        button.addClickCommands(btn -> onSelectBlock(builderBlock));
+        button.setUserData("id", builderBlock.getName());
 
         return button;
     }
@@ -256,7 +302,7 @@ public class BlocksState extends BaseAppState {
     }
 
     private String getIconPath(Block block) {
-        return "/Textures/blocks/" + block.getName().replaceAll("\\s", "_") + ".png";
+        return "/Textures/blocks/" + block.getName() + ".png";
     }
 
     @RequiredArgsConstructor

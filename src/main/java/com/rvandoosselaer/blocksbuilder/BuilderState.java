@@ -22,14 +22,13 @@ import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Quad;
 import com.jme3.system.JmeSystem;
 import com.rvandoosselaer.blocks.Block;
-import com.rvandoosselaer.blocks.BlockIds;
-import com.rvandoosselaer.blocks.BlockRegistry;
 import com.rvandoosselaer.blocks.BlocksConfig;
 import com.rvandoosselaer.blocks.Chunk;
 import com.rvandoosselaer.blocks.ChunkManager;
 import com.rvandoosselaer.blocks.ChunkManagerListener;
 import com.rvandoosselaer.blocks.ChunkManagerState;
 import com.rvandoosselaer.blocks.FileRepository;
+import com.rvandoosselaer.blocksbuilder.gui.BlocksState;
 import com.rvandoosselaer.jmeutils.util.GeometryUtils;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.core.VersionedHolder;
@@ -67,7 +66,7 @@ public class BuilderState extends BaseAppState {
     private Node builderNode;
     private Node chunkNode;
     @Getter
-    private VersionedHolder<Block> selectedBlock;
+    private VersionedHolder<BuilderBlock> selectedBlock;
     private Geometry grid;
     private Geometry addBlockPlaceholder;
     private Geometry removeBlockPlaceholder;
@@ -80,10 +79,11 @@ public class BuilderState extends BaseAppState {
     @Getter
     private final SceneInformation sceneInformation = new SceneInformation();
     private FileRepository chunkRepository;
+    private BlocksState blocksState;
 
     @Override
     protected void initialize(Application app) {
-        selectedBlock = new VersionedHolder<>(getDefaultBlock());
+        selectedBlock = new VersionedHolder<>();
         chunk = Chunk.createAt(new Vec3i(0, 0, 0));
         chunkNode = chunk.getNode();
         chunkListener = new ChunkListener();
@@ -152,8 +152,8 @@ public class BuilderState extends BaseAppState {
         }
     }
 
-    public void setSelectedBlock(Block block) {
-        selectedBlock.setObject(block);
+    public void setSelectedBlock(BuilderBlock builderBlock) {
+        selectedBlock.setObject(builderBlock);
     }
 
     public void clearScene() {
@@ -224,11 +224,6 @@ public class BuilderState extends BaseAppState {
 
     public void setClickRepeatRate(int interval) {
         inputListener.setClickRepeatRate(interval);
-    }
-
-    private Block getDefaultBlock() {
-        BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
-        return blockRegistry.get(BlockIds.GRASS);
     }
 
     private Geometry createGrid(AssetManager assetManager) {
@@ -315,7 +310,7 @@ public class BuilderState extends BaseAppState {
     }
 
     private void addBlock() {
-        chunkManager.addBlock(addBlockPlaceholder.getWorldTranslation(), selectedBlock.getObject());
+        chunkManager.addBlock(addBlockPlaceholder.getWorldTranslation(), selectedBlock.getObject().getBlock());
     }
 
     private void removeBlock() {
@@ -332,29 +327,14 @@ public class BuilderState extends BaseAppState {
     }
 
     /**
-     * Returns the 90° clockwise rotated block of this block, or the same block when the rotated block is not found.
+     * Returns the next block shape of the block or the passed block.
      */
     private Block getRotatedBlock(Block block) {
-        String rotatedBlockName = null;
-        if (block.getName().endsWith("left")) {
-            rotatedBlockName = block.getName().substring(0, block.getName().length() - 4) + "back";
-        } else if (block.getName().endsWith("back")) {
-            rotatedBlockName = block.getName().substring(0, block.getName().length() - 4) + "right";
-        } else if (block.getName().endsWith("right")) {
-            rotatedBlockName = block.getName().substring(0, block.getName().length() - 5) + "front";
-        } else if (block.getName().endsWith("front")) {
-            rotatedBlockName = block.getName().substring(0, block.getName().length() - 5) + "left";
+        if (blocksState == null) {
+            blocksState = getState(BlocksState.class);
         }
 
-        if (rotatedBlockName != null) {
-            BlockRegistry blockRegistry = BlocksConfig.getInstance().getBlockRegistry();
-            Block rotatedBlock = blockRegistry.get(rotatedBlockName);
-            if (rotatedBlock != null) {
-                return rotatedBlock;
-            }
-        }
-
-        return block;
+        return blocksState.getRotatedBlock(block).orElse(block);
     }
 
     private class ChunkListener implements ChunkManagerListener {
