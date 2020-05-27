@@ -92,6 +92,8 @@ public class Main extends SimpleApplication {
     private static AppSettings createSettings() {
         AppSettings settings = ApplicationSettingsFactory.getAppSettings();
         settings.setTitle(String.format("BlocksBuilder - v%s", VersionHelper.getVersion()));
+        // disable audio
+        settings.setAudioRenderer(null);
 
         return settings;
     }
