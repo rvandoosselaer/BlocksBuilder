@@ -114,6 +114,11 @@ task copyDistFiles(type: Copy) {
     from file("$projectDir/src/main/resources/application.properties") into file("$projectDir/src/dist/conf")
 }
 
+task cleanTextures() {
+    delete "$projectDir/assets/Textures/blocks/"
+    mkdir "$projectDir/assets/Textures/blocks/"
+}
+
 clean {
     dependsOn cleanNatives
     dependsOn cleanJavadoc
